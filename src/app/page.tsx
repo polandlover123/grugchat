@@ -192,7 +192,7 @@ export default function Home() {
                           <div className={`max-w-[75%] rounded-lg p-3 shadow-sm ${
                                   message.role === 'user'
                                   ? 'bg-primary text-primary-foreground'
-                                  : 'bg-accent/50'
+                                  : 'bg-card'
                               }`}>
                               <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                           </div>
@@ -208,7 +208,7 @@ export default function Home() {
                           <Avatar className="h-8 w-8 border">
                               <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
                           </Avatar>
-                          <div className="max-w-[75%] rounded-lg p-3 bg-accent/50">
+                          <div className="max-w-[75%] rounded-lg p-3 bg-card">
                               <div className="flex items-center gap-2 text-muted-foreground">
                                   <Loader2 className="h-4 w-4 animate-spin" />
                                   <span className="text-sm">Thinking...</span>
