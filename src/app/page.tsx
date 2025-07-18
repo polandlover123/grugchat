@@ -5,22 +5,14 @@ import { useState, useRef, useEffect, type SVGProps } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { pdfChat } from "@/ai/flows/pdf-chat";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bot, User, Upload, Download, Trash2, Loader2, Paperclip, Highlighter, FileText, MessageSquare } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
-
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
-
+import { Bot, User, Upload, Download, Trash2, Loader2, Paperclip } from 'lucide-react';
 
 type Message = {
   role: "user" | "model";
   content: string;
-  sources?: string[];
 };
 
 const GeminiLogo = (props: SVGProps<SVGSVGElement>) => (
@@ -42,10 +34,6 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  const [numPages, setNumPages] = useState<number | null>(null);
-  const [highlightText, setHighlightText] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState("chat");
-
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -65,8 +53,6 @@ export default function Home() {
       }
       setPdfFile(file);
       setChatHistory([]);
-      setHighlightText([]);
-      setActiveTab("chat");
       const reader = new FileReader();
       reader.onload = (e) => {
         setPdfDataUri(e.target?.result as string);
@@ -77,7 +63,7 @@ export default function Home() {
       };
       reader.readAsDataURL(file);
     }
-    if(event.target) {
+     if(event.target) {
         event.target.value = "";
     }
   };
@@ -91,25 +77,24 @@ export default function Home() {
     const currentInput = userInput;
     setUserInput("");
     setIsLoading(true);
-    setHighlightText([]);
 
     try {
       const historyString = chatHistory
         .map((msg) => `${msg.role}: ${msg.content}`)
         .join("\n");
-      
+
       const response = await pdfChat({
         pdfDataUri: pdfDataUri,
         question: currentInput,
         chatHistory: historyString,
       });
 
-      const modelMessage: Message = { role: "model", content: response.answer, sources: response.sources };
+      const modelMessage: Message = { role: "model", content: response.answer };
       setChatHistory((prev) => [...prev, modelMessage]);
     } catch (error) {
       console.error(error);
-      setChatHistory((prev) => prev.slice(0, -1)); 
-      setUserInput(currentInput); 
+      setChatHistory((prev) => prev.slice(0, -1));
+      setUserInput(currentInput);
       toast({
         title: "An error occurred",
         description: "Failed to get a response from the AI. Please try again.",
@@ -119,21 +104,12 @@ export default function Home() {
       setIsLoading(false);
     }
   };
-  
-  const handleHighlight = (sources?: string[]) => {
-    if(sources && sources.length > 0) {
-        setHighlightText(sources);
-        setActiveTab("preview");
-    }
-  }
 
   const resetChat = () => {
     setChatHistory([]);
     setPdfFile(null);
     setPdfDataUri(null);
-    setHighlightText([]);
-    setActiveTab("chat");
-    if (fileInputRef.current) {
+     if (fileInputRef.current) {
         fileInputRef.current.value = "";
     }
     toast({
@@ -143,7 +119,7 @@ export default function Home() {
   };
 
   const downloadChat = () => {
-    if (chatHistory.length === 0) {
+     if (chatHistory.length === 0) {
       toast({
           title: "Nothing to download",
           description: "Chat history is empty.",
@@ -163,44 +139,6 @@ export default function Home() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
-  
-  function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
-    setNumPages(numPages);
-  }
-
-  const customTextRenderer = React.useCallback(
-    (textItem: any) => {
-      if (!highlightText || highlightText.length === 0) {
-        return textItem.str;
-      }
-  
-      const content = textItem.str;
-      let highlightedContent: (string | JSX.Element)[] = [content];
-  
-      highlightText.forEach((highlight) => {
-        if (!highlight) return;
-        let tempContent: (string | JSX.Element)[] = [];
-        highlightedContent.forEach((segment) => {
-          if (typeof segment === 'string') {
-            const parts = segment.split(new RegExp(`(${highlight.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi'));
-            parts.forEach((part, index) => {
-              if (index % 2 === 1) {
-                tempContent.push(<mark key={`${highlight}-${index}`} className="bg-yellow-300">{part}</mark>);
-              } else {
-                tempContent.push(part);
-              }
-            });
-          } else {
-            tempContent.push(segment);
-          }
-        });
-        highlightedContent = tempContent;
-      });
-      return <>{highlightedContent}</>;
-    },
-    [highlightText]
-  );
-  
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground font-body">
@@ -237,19 +175,12 @@ export default function Home() {
                     </Button>
                 </div>
             ) : (
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-                <CardHeader className="flex-row items-center justify-between border-b">
-                    <div className="flex items-center gap-3">
-                        <Paperclip className="text-primary h-5 w-5"/>
-                        <CardTitle className="text-lg font-medium">{pdfFile.name}</CardTitle>
-                    </div>
-                    <TabsList>
-                        <TabsTrigger value="chat"><MessageSquare className="mr-2 h-4 w-4"/>Chat</TabsTrigger>
-                        <TabsTrigger value="preview"><FileText className="mr-2 h-4 w-4"/>Preview</TabsTrigger>
-                    </TabsList>
-                </CardHeader>
-
-                <TabsContent value="chat" className="flex-1 overflow-y-auto p-4" ref={chatContainerRef}>
+              <div className="h-full flex flex-col">
+                <div className="flex items-center gap-3 border-b p-4">
+                  <Paperclip className="text-primary h-5 w-5"/>
+                  <h2 className="text-lg font-medium">{pdfFile.name}</h2>
+                </div>
+                <CardContent className="flex-1 overflow-y-auto p-4" ref={chatContainerRef}>
                   <div className="space-y-6">
                       {chatHistory.map((message, index) => (
                           <div key={index} className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
@@ -264,13 +195,6 @@ export default function Home() {
                                   : 'bg-accent/50'
                               }`}>
                               <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                              {message.role === 'model' && message.sources && message.sources.length > 0 && (
-                                <div className="mt-2 pt-2 border-t border-primary/20">
-                                    <Button variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => handleHighlight(message.sources)}>
-                                        <Highlighter className="mr-1 h-4 w-4" /> Show in document
-                                    </Button>
-                                </div>
-                              )}
                           </div>
                           {message.role === 'user' && (
                               <Avatar className="h-8 w-8 border">
@@ -293,22 +217,8 @@ export default function Home() {
                           </div>
                       )}
                   </div>
-                </TabsContent>
-                <TabsContent value="preview" className="flex-1 overflow-y-auto bg-gray-100 p-4">
-                  <div className="mx-auto max-w-max">
-                      <Document file={pdfDataUri} onLoadSuccess={onDocumentLoadSuccess}>
-                          {Array.from(new Array(numPages), (el, index) => (
-                              <Page 
-                                key={`page_${index + 1}`} 
-                                pageNumber={index + 1}
-                                renderTextLayer={true}
-                                customTextRenderer={customTextRenderer}
-                              />
-                          ))}
-                      </Document>
-                  </div>
-                </TabsContent>
-              </Tabs>
+                </CardContent>
+              </div>
             )}
         </Card>
       </main>
