@@ -167,7 +167,7 @@ export default function Home() {
         <svg data-ai-hint="document analysis" width="100" height="100" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-muted-foreground/50">
             <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20ZM8 12H16V14H8V12ZM8 16H13V18H8V16Z" fill="currentColor"/>
         </svg>
-        <h2 className="text-2xl font-semibold">Welcome to your PDF Chat Tool</h2>
+        <h2 className="text-2xl font-semibold">Welcome to Grug</h2>
         <p className="text-muted-foreground">Upload a PDF document to start a conversation.</p>
         <Button onClick={() => fileInputRef.current?.click()}>
             <Upload className="mr-2 h-4 w-4" /> Select PDF
@@ -245,9 +245,12 @@ export default function Home() {
         {/* Sidebar */}
         <aside className="w-64 flex flex-col border-r bg-card">
           <div className="p-4 border-b">
-              <div className="flex items-center gap-2">
-                <BookText className="text-primary h-6 w-6" />
-                <h1 className="text-xl font-bold">PDF Chat</h1>
+              <div className="flex flex-col items-start gap-1">
+                <div className="flex items-center gap-2">
+                    <BookText className="text-primary h-6 w-6" />
+                    <h1 className="text-xl font-bold">Grug</h1>
+                </div>
+                <p className="text-xs text-muted-foreground ml-8">PDF Chat by Caveman Software</p>
             </div>
           </div>
           <div className="p-4">

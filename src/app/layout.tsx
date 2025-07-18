@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
-  title: 'PDF Chat Tool',
+  title: 'Grug (PDF Chat by Caveman Software)',
   description: 'Chat with your PDF documents',
 };
 
