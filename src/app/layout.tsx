@@ -4,8 +4,8 @@ import { Toaster } from "@/components/ui/toaster"
 import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
-  title: 'GeminiPDF Chat',
-  description: 'Chat with your PDF documents using Google Gemini',
+  title: 'Grug: PDF CHAT TOOL',
+  description: 'Chat with your PDF documents with Grug',
 };
 
 export default function RootLayout({

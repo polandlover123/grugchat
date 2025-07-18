@@ -17,7 +17,7 @@ type Message = {
   content: string;
 };
 
-const GeminiLogo = (props: SVGProps<SVGSVGElement>) => (
+const GrugLogo = (props: SVGProps<SVGSVGElement>) => (
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
         <path d="M12 3.5C7.02944 3.5 3 7.52944 3 12.5C3 17.4706 7.02944 21.5 12 21.5C16.9706 21.5 21 17.4706 21 12.5C21 7.52944 16.9706 3.5 12 3.5Z" stroke="currentColor" strokeWidth="1.5"/>
         <path d="M12 3.5V2.5C17.5228 2.5 22 6.97715 22 12.5C22 18.0228 17.5228 22.5 12 22.5C6.47715 22.5 2 18.0228 2 12.5C2 6.97715 6.47715 2.5 12 2.5V3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -135,7 +135,7 @@ export default function Home() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `geminipdf-chat-${new Date().toISOString().split('T')[0]}.txt`;
+    a.download = `grug-chat-${new Date().toISOString().split('T')[0]}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -146,8 +146,8 @@ export default function Home() {
     <div className="flex h-screen flex-col bg-background text-foreground font-body">
       <header className="flex items-center justify-between border-b p-4 shadow-sm shrink-0">
         <div className="flex items-center gap-2">
-            <GeminiLogo className="text-primary" />
-            <h1 className="text-xl font-bold">GeminiPDF Chat</h1>
+            <GrugLogo className="text-primary" />
+            <h1 className="text-xl font-bold">Grug: PDF CHAT TOOL</h1>
         </div>
         <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
@@ -170,7 +170,7 @@ export default function Home() {
                     <svg data-ai-hint="document analysis" width="100" height="100" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-muted-foreground/50">
                         <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20ZM8 12H16V14H8V12ZM8 16H13V18H8V16Z" fill="currentColor"/>
                     </svg>
-                    <h2 className="text-2xl font-semibold">Welcome to GeminiPDF Chat</h2>
+                    <h2 className="text-2xl font-semibold">Welcome to Grug: PDF CHAT TOOL</h2>
                     <p className="text-muted-foreground">Upload a PDF document to start a conversation.</p>
                     <Button onClick={() => fileInputRef.current?.click()}>
                         <Upload className="mr-2 h-4 w-4" /> Select PDF
