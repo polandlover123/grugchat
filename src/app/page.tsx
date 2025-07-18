@@ -5,13 +5,23 @@ import { useState, useRef, useEffect, type SVGProps } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { pdfChat } from "@/ai/flows/pdf-chat";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Bot, User, Upload, Trash2, Loader2, Paperclip, Plus, MessageSquare } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 type Message = {
   role: "user" | "model";
@@ -39,6 +49,7 @@ export default function Home() {
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -95,7 +106,6 @@ export default function Home() {
     const newUserMessage: Message = { role: "user", content: userInput };
     const currentInput = userInput;
 
-    // Update state immediately for better UX
     setSessions(prev => prev.map(s => 
       s.id === activeChatId ? { ...s, chatHistory: [...s.chatHistory, newUserMessage] } : s
     ));
@@ -119,7 +129,6 @@ export default function Home() {
       ));
     } catch (error) {
       console.error(error);
-      // Revert the user message on error
        setSessions(prev => prev.map(s => 
         s.id === activeChatId ? { ...s, chatHistory: s.chatHistory.slice(0, -1) } : s
       ));
@@ -134,17 +143,28 @@ export default function Home() {
     }
   };
 
-  const deleteChat = (e: React.MouseEvent, sessionId: string) => {
+  const handleDeleteRequest = (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
-    setSessions(prev => prev.filter(s => s.id !== sessionId));
-    if (activeChatId === sessionId) {
-        const remainingSessions = sessions.filter(s => s.id !== sessionId);
-        setActiveChatId(remainingSessions.length > 0 ? remainingSessions[0].id : null);
-    }
+    setSessionToDelete(sessionId);
+  };
+  
+  const confirmDeleteChat = () => {
+    if (!sessionToDelete) return;
+    const sessionName = sessions.find(s => s.id === sessionToDelete)?.pdfFile.name;
+
+    setSessions(prev => {
+        const remaining = prev.filter(s => s.id !== sessionToDelete);
+        if (activeChatId === sessionToDelete) {
+            setActiveChatId(remaining.length > 0 ? remaining[0].id : null);
+        }
+        return remaining;
+    });
+
     toast({
       title: "Chat Deleted",
-      description: "The chat and document have been removed.",
+      description: `"${sessionName}" has been removed.`,
     });
+    setSessionToDelete(null);
   };
 
   const selectChat = (sessionId: string) => {
@@ -232,7 +252,7 @@ export default function Home() {
   return (
       <div className="flex h-screen bg-background text-foreground font-body">
         {/* Sidebar */}
-        <aside className="w-64 flex flex-col border-r">
+        <aside className="w-64 flex flex-col border-r bg-card">
           <div className="p-4 border-b">
               <div className="flex items-center gap-2">
                 <GrugLogo className="text-primary" />
@@ -258,7 +278,7 @@ export default function Home() {
                     <Button 
                         variant={session.id === activeChatId ? "secondary" : "ghost"}
                         onClick={() => selectChat(session.id)}
-                        className="w-full justify-start truncate"
+                        className="w-full justify-start truncate pr-8"
                     >
                       <MessageSquare className="mr-2 h-4 w-4" />
                       <span className="truncate">{session.pdfFile.name}</span>
@@ -266,8 +286,8 @@ export default function Home() {
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover:opacity-100" 
-                      onClick={(e) => deleteChat(e, session.id)}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100" 
+                      onClick={(e) => handleDeleteRequest(e, session.id)}
                       aria-label="Delete chat"
                     >
                         <Trash2 className="h-4 w-4" />
@@ -280,10 +300,28 @@ export default function Home() {
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col">
-            <Card className="h-full w-full flex flex-col shadow-lg rounded-none border-0">
+            <div className="h-full w-full flex flex-col shadow-lg">
                 {sessions.length === 0 ? renderWelcomeScreen() : (activeSession ? renderChatInterface() : renderWelcomeScreen())}
-            </Card>
+            </div>
         </main>
+        
+        <AlertDialog open={!!sessionToDelete} onOpenChange={(open) => !open && setSessionToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure you want to delete this chat?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the chat history for
+                "{sessions.find(s => s.id === sessionToDelete)?.pdfFile.name}".
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setSessionToDelete(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDeleteChat}>Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
   );
 }
+
+    
