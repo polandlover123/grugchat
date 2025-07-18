@@ -228,7 +228,7 @@ export default function Home() {
             <Input
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
-              placeholder={activeSession ? "Ask a question about the PDF..." : "Upload a PDF to start chatting"}
+              placeholder="Ask a question about the PDF..."
               disabled={!activeSession || isLoading}
               className="flex-1"
             />
