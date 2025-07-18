@@ -4,8 +4,8 @@ import { Toaster } from "@/components/ui/toaster"
 import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
-  title: 'Grug: PDF CHAT TOOL',
-  description: 'Chat with your PDF documents with Grug',
+  title: 'PDF Chat Tool',
+  description: 'Chat with your PDF documents',
 };
 
 export default function RootLayout({
