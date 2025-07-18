@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Bot, User, Upload, Download, Trash2, Loader2, Paperclip } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type Message = {
   role: "user" | "model";
@@ -194,7 +196,15 @@ export default function Home() {
                                   ? 'bg-primary text-primary-foreground'
                                   : 'bg-card'
                               }`}>
-                              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                                {message.role === 'user' ? (
+                                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                                ) : (
+                                    <div className="markdown-container text-sm">
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                            {message.content}
+                                        </ReactMarkdown>
+                                    </div>
+                                )}
                           </div>
                           {message.role === 'user' && (
                               <Avatar className="h-8 w-8 border">
