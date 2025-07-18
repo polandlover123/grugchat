@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -24,6 +25,7 @@ export type PdfChatInput = z.infer<typeof PdfChatInputSchema>;
 
 const PdfChatOutputSchema = z.object({
   answer: z.string().describe('The answer to the user question based on the PDF content.'),
+  sources: z.array(z.string()).describe('Direct excerpts from the PDF that support the answer.'),
 });
 export type PdfChatOutput = z.infer<typeof PdfChatOutputSchema>;
 
@@ -39,6 +41,8 @@ const prompt = ai.definePrompt({
 
 Your tone should be patient, helpful, and positive. When I ask a question, answer it using the PDF content.
 If the document doesn't contain the answer, it's okay to say that, but you can also use your general knowledge to provide a helpful, related answer. Just make sure to mention that the information is from outside the document.
+
+When you answer, you MUST also provide the exact excerpts from the document that you used to form your answer in the 'sources' field. This is very important.
 
 Let's work together to understand this document!
 

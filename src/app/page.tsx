@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, type SVGProps } from "react";
@@ -7,11 +8,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bot, User, Upload, Download, Trash2, Loader2, Paperclip } from 'lucide-react';
+import { Bot, User, Upload, Download, Trash2, Loader2, Paperclip, Highlighter, FileText, MessageSquare } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.js',
+  import.meta.url,
+).toString();
 
 type Message = {
   role: "user" | "model";
   content: string;
+  sources?: string[];
 };
 
 const GeminiLogo = (props: SVGProps<SVGSVGElement>) => (
@@ -33,6 +44,10 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
+  const [numPages, setNumPages] = useState<number | null>(null);
+  const [highlightText, setHighlightText] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState("chat");
+
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -52,6 +67,8 @@ export default function Home() {
       }
       setPdfFile(file);
       setChatHistory([]);
+      setHighlightText([]);
+      setActiveTab("chat");
       const reader = new FileReader();
       reader.onload = (e) => {
         setPdfDataUri(e.target?.result as string);
@@ -76,6 +93,7 @@ export default function Home() {
     const currentInput = userInput;
     setUserInput("");
     setIsLoading(true);
+    setHighlightText([]);
 
     try {
       const historyString = chatHistory
@@ -88,7 +106,7 @@ export default function Home() {
         chatHistory: historyString,
       });
 
-      const modelMessage: Message = { role: "model", content: response.answer };
+      const modelMessage: Message = { role: "model", content: response.answer, sources: response.sources };
       setChatHistory((prev) => [...prev, modelMessage]);
     } catch (error) {
       console.error(error);
@@ -103,11 +121,20 @@ export default function Home() {
       setIsLoading(false);
     }
   };
+  
+  const handleHighlight = (sources?: string[]) => {
+    if(sources && sources.length > 0) {
+        setHighlightText(sources);
+        setActiveTab("preview");
+    }
+  }
 
   const resetChat = () => {
     setChatHistory([]);
     setPdfFile(null);
     setPdfDataUri(null);
+    setHighlightText([]);
+    setActiveTab("chat");
     if (fileInputRef.current) {
         fileInputRef.current.value = "";
     }
@@ -138,6 +165,10 @@ export default function Home() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+  
+  function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
+    setNumPages(numPages);
+  }
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground font-body">
@@ -174,52 +205,95 @@ export default function Home() {
                     </Button>
                 </div>
             ) : (
-                <>
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
                 <CardHeader className="flex-row items-center justify-between border-b">
                     <div className="flex items-center gap-3">
                         <Paperclip className="text-primary h-5 w-5"/>
                         <CardTitle className="text-lg font-medium">{pdfFile.name}</CardTitle>
                     </div>
+                    <TabsList>
+                        <TabsTrigger value="chat"><MessageSquare className="mr-2 h-4 w-4"/>Chat</TabsTrigger>
+                        <TabsTrigger value="preview"><FileText className="mr-2 h-4 w-4"/>Preview</TabsTrigger>
+                    </TabsList>
                 </CardHeader>
-                <div className="flex-1 overflow-y-auto p-4" ref={chatContainerRef}>
-                    <div className="space-y-6">
-                        {chatHistory.map((message, index) => (
-                            <div key={index} className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
-                            {message.role === 'model' && (
-                                <Avatar className="h-8 w-8 border">
-                                    <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
-                                </Avatar>
-                            )}
-                            <div className={`max-w-[75%] rounded-lg p-3 shadow-sm ${
-                                    message.role === 'user'
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'bg-accent/50'
-                                }`}>
-                                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                            </div>
-                            {message.role === 'user' && (
-                                <Avatar className="h-8 w-8 border">
-                                    <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
-                                </Avatar>
-                            )}
-                            </div>
-                        ))}
-                        {isLoading && (
-                            <div className="flex items-start gap-4">
-                            <Avatar className="h-8 w-8 border">
-                                <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
-                            </Avatar>
-                            <div className="max-w-[75%] rounded-lg p-3 bg-accent/50">
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                    <span className="text-sm">Thinking...</span>
+
+                <TabsContent value="chat" className="flex-1 overflow-y-auto p-4" ref={chatContainerRef}>
+                  <div className="space-y-6">
+                      {chatHistory.map((message, index) => (
+                          <div key={index} className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
+                          {message.role === 'model' && (
+                              <Avatar className="h-8 w-8 border">
+                                  <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
+                              </Avatar>
+                          )}
+                          <div className={`max-w-[75%] rounded-lg p-3 shadow-sm ${
+                                  message.role === 'user'
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-accent/50'
+                              }`}>
+                              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                              {message.role === 'model' && message.sources && message.sources.length > 0 && (
+                                <div className="mt-2 pt-2 border-t border-primary/20">
+                                    <Button variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => handleHighlight(message.sources)}>
+                                        <Highlighter className="mr-1 h-4 w-4" /> Show in document
+                                    </Button>
                                 </div>
-                            </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-                </>
+                              )}
+                          </div>
+                          {message.role === 'user' && (
+                              <Avatar className="h-8 w-8 border">
+                                  <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
+                              </Avatar>
+                          )}
+                          </div>
+                      ))}
+                      {isLoading && (
+                          <div className="flex items-start gap-4">
+                          <Avatar className="h-8 w-8 border">
+                              <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
+                          </Avatar>
+                          <div className="max-w-[75%] rounded-lg p-3 bg-accent/50">
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <span className="text-sm">Thinking...</span>
+                              </div>
+                          </div>
+                          </div>
+                      )}
+                  </div>
+                </TabsContent>
+                <TabsContent value="preview" className="flex-1 overflow-y-auto bg-gray-100 p-4">
+                  <div className="mx-auto max-w-max">
+                      <Document file={pdfDataUri} onLoadSuccess={onDocumentLoadSuccess}>
+                          {Array.from(new Array(numPages), (el, index) => (
+                              <Page 
+                                key={`page_${index + 1}`} 
+                                pageNumber={index + 1}
+                                renderTextLayer={true}
+                                customTextRenderer={({ str }) => {
+                                  const textToHighlight = highlightText.find(h => str.includes(h));
+                                  if (textToHighlight) {
+                                      const parts = str.split(new RegExp(`(${textToHighlight})`, 'gi'));
+                                      return (
+                                          <>
+                                              {parts.map((part, i) =>
+                                                  part.toLowerCase() === textToHighlight.toLowerCase() ? (
+                                                      <mark key={i} className="bg-yellow-300">{part}</mark>
+                                                  ) : (
+                                                      part
+                                                  )
+                                              )}
+                                          </>
+                                      );
+                                  }
+                                  return str;
+                                }}
+                              />
+                          ))}
+                      </Document>
+                  </div>
+                </TabsContent>
+              </Tabs>
             )}
         </Card>
       </main>
