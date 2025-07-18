@@ -8,14 +8,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bot, User, Upload, Download, Trash2, Loader2, Paperclip } from 'lucide-react';
+import { Bot, User, Upload, Trash2, Loader2, Paperclip, FileText, Plus, MessageSquare } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type Message = {
   role: "user" | "model";
   content: string;
 };
+
+type ChatSession = {
+  id: string;
+  pdfFile: File;
+  pdfDataUri: string;
+  chatHistory: Message[];
+}
 
 const GrugLogo = (props: SVGProps<SVGSVGElement>) => (
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -27,14 +36,17 @@ const GrugLogo = (props: SVGProps<SVGSVGElement>) => (
 );
 
 export default function Home() {
-  const [chatHistory, setChatHistory] = useState<Message[]>([]);
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [pdfDataUri, setPdfDataUri] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+
+  const activeSession = sessions.find(s => s.id === activeChatId) || null;
+  const chatHistory = activeSession?.chatHistory || [];
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -53,11 +65,19 @@ export default function Home() {
         });
         return;
       }
-      setPdfFile(file);
-      setChatHistory([]);
+      
+      const newSessionId = Date.now().toString();
+
       const reader = new FileReader();
       reader.onload = (e) => {
-        setPdfDataUri(e.target?.result as string);
+        const newSession: ChatSession = {
+          id: newSessionId,
+          pdfFile: file,
+          pdfDataUri: e.target?.result as string,
+          chatHistory: [],
+        }
+        setSessions(prev => [...prev, newSession]);
+        setActiveChatId(newSessionId);
         toast({
           title: "PDF Uploaded",
           description: `"${file.name}" is ready for chatting.`,
@@ -72,30 +92,39 @@ export default function Home() {
 
   const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userInput.trim() || isLoading || !pdfDataUri) return;
+    if (!userInput.trim() || isLoading || !activeSession) return;
 
     const newUserMessage: Message = { role: "user", content: userInput };
-    setChatHistory((prev) => [...prev, newUserMessage]);
     const currentInput = userInput;
+
+    // Update state immediately for better UX
+    setSessions(prev => prev.map(s => 
+      s.id === activeChatId ? { ...s, chatHistory: [...s.chatHistory, newUserMessage] } : s
+    ));
     setUserInput("");
     setIsLoading(true);
 
     try {
-      const historyString = chatHistory
+      const historyString = activeSession.chatHistory
         .map((msg) => `${msg.role}: ${msg.content}`)
         .join("\n");
 
       const response = await pdfChat({
-        pdfDataUri: pdfDataUri,
+        pdfDataUri: activeSession.pdfDataUri,
         question: currentInput,
         chatHistory: historyString,
       });
 
       const modelMessage: Message = { role: "model", content: response.answer };
-      setChatHistory((prev) => [...prev, modelMessage]);
+      setSessions(prev => prev.map(s => 
+        s.id === activeChatId ? { ...s, chatHistory: [...s.chatHistory, modelMessage] } : s
+      ));
     } catch (error) {
       console.error(error);
-      setChatHistory((prev) => prev.slice(0, -1));
+      // Revert the user message on error
+       setSessions(prev => prev.map(s => 
+        s.id === activeChatId ? { ...s, chatHistory: s.chatHistory.slice(0, -1) } : s
+      ));
       setUserInput(currentInput);
       toast({
         title: "An error occurred",
@@ -107,146 +136,164 @@ export default function Home() {
     }
   };
 
-  const resetChat = () => {
-    setChatHistory([]);
-    setPdfFile(null);
-    setPdfDataUri(null);
-     if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+  const deleteChat = (e: React.MouseEvent, sessionId: string) => {
+    e.stopPropagation();
+    setSessions(prev => prev.filter(s => s.id !== sessionId));
+    if (activeChatId === sessionId) {
+        setActiveChatId(sessions.length > 1 ? sessions.filter(s => s.id !== sessionId)[0].id : null);
     }
     toast({
-      title: "Chat Reset",
-      description: "The chat and document have been cleared.",
+      title: "Chat Deleted",
+      description: "The chat and document have been removed.",
     });
   };
 
-  const downloadChat = () => {
-     if (chatHistory.length === 0) {
-      toast({
-          title: "Nothing to download",
-          description: "Chat history is empty.",
-      });
-      return;
-    }
-    const chatText = `Chat with ${pdfFile?.name || 'PDF'}\n\n` + chatHistory
-      .map((msg) => `${msg.role.charAt(0).toUpperCase() + msg.role.slice(1)}: ${msg.content}`)
-      .join("\n\n" + "-".repeat(20) + "\n\n");
-    const blob = new Blob([chatText], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `grug-chat-${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
+  const selectChat = (sessionId: string) => {
+    setActiveChatId(sessionId);
+  }
 
-  return (
-    <div className="flex h-screen flex-col bg-background text-foreground font-body">
-      <header className="flex items-center justify-between border-b p-4 shadow-sm shrink-0">
-        <div className="flex items-center gap-2">
-            <GrugLogo className="text-primary" />
-            <h1 className="text-xl font-bold">Grug: PDF CHAT TOOL</h1>
-        </div>
-        <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                <Upload className="mr-2 h-4 w-4" /> Upload PDF
-            </Button>
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="application/pdf" className="hidden" />
-            <Button variant="outline" size="icon" onClick={downloadChat} aria-label="Download chat" disabled={chatHistory.length === 0}>
-                <Download className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={resetChat} aria-label="Reset chat">
-                <Trash2 className="h-4 w-4" />
-            </Button>
-        </div>
-      </header>
-
-      <main className="flex-1 overflow-hidden p-4">
-        <Card className="h-full w-full flex flex-col shadow-lg">
-            {!pdfFile ? (
-                <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-8">
-                    <svg data-ai-hint="document analysis" width="100" height="100" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-muted-foreground/50">
-                        <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20ZM8 12H16V14H8V12ZM8 16H13V18H8V16Z" fill="currentColor"/>
-                    </svg>
-                    <h2 className="text-2xl font-semibold">Welcome to Grug: PDF CHAT TOOL</h2>
-                    <p className="text-muted-foreground">Upload a PDF document to start a conversation.</p>
-                    <Button onClick={() => fileInputRef.current?.click()}>
-                        <Upload className="mr-2 h-4 w-4" /> Select PDF
-                    </Button>
-                </div>
-            ) : (
-              <div className="h-full flex flex-col">
-                <div className="flex items-center gap-3 border-b p-4">
-                  <Paperclip className="text-primary h-5 w-5"/>
-                  <h2 className="text-lg font-medium">{pdfFile.name}</h2>
-                </div>
-                <CardContent className="flex-1 overflow-y-auto p-4" ref={chatContainerRef}>
-                  <div className="space-y-6">
-                      {chatHistory.map((message, index) => (
-                          <div key={index} className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
-                          {message.role === 'model' && (
-                              <Avatar className="h-8 w-8 border">
-                                  <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
-                              </Avatar>
-                          )}
-                          <div className={`max-w-[75%] rounded-lg p-3 shadow-sm ${
-                                  message.role === 'user'
-                                  ? 'bg-primary text-primary-foreground'
-                                  : 'bg-card'
-                              }`}>
-                                {message.role === 'user' ? (
-                                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                                ) : (
-                                    <div className="markdown-container text-sm">
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                            {message.content}
-                                        </ReactMarkdown>
-                                    </div>
-                                )}
-                          </div>
-                          {message.role === 'user' && (
-                              <Avatar className="h-8 w-8 border">
-                                  <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
-                              </Avatar>
-                          )}
-                          </div>
-                      ))}
-                      {isLoading && (
-                          <div className="flex items-start gap-4">
-                          <Avatar className="h-8 w-8 border">
-                              <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
-                          </Avatar>
-                          <div className="max-w-[75%] rounded-lg p-3 bg-card">
-                              <div className="flex items-center gap-2 text-muted-foreground">
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  <span className="text-sm">Thinking...</span>
-                              </div>
-                          </div>
-                          </div>
-                      )}
-                  </div>
-                </CardContent>
-              </div>
-            )}
-        </Card>
-      </main>
-
-      <footer className="p-4 pt-0 shrink-0">
-        <form onSubmit={handleChatSubmit} className="flex items-center gap-2">
-          <Input
-            value={userInput}
-            onChange={(e) => setUserInput(e.target.value)}
-            placeholder={pdfDataUri ? "Ask a question about the PDF..." : "Upload a PDF to start chatting"}
-            disabled={!pdfDataUri || isLoading}
-            className="flex-1"
-          />
-          <Button type="submit" disabled={!pdfDataUri || isLoading || !userInput.trim()}>
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send'}
-          </Button>
-        </form>
-      </footer>
+  const renderWelcomeScreen = () => (
+     <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-8">
+        <svg data-ai-hint="document analysis" width="100" height="100" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-muted-foreground/50">
+            <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20ZM8 12H16V14H8V12ZM8 16H13V18H8V16Z" fill="currentColor"/>
+        </svg>
+        <h2 className="text-2xl font-semibold">Welcome to Grug: PDF CHAT TOOL</h2>
+        <p className="text-muted-foreground">Upload a PDF document to start a conversation.</p>
+        <Button onClick={() => fileInputRef.current?.click()}>
+            <Upload className="mr-2 h-4 w-4" /> Select PDF
+        </Button>
     </div>
   );
+
+  const renderChatInterface = () => (
+    <div className="h-full flex flex-col">
+      <div className="flex items-center gap-3 border-b p-4">
+        <Paperclip className="text-primary h-5 w-5"/>
+        <h2 className="text-lg font-medium">{activeSession?.pdfFile.name}</h2>
+      </div>
+      <CardContent className="flex-1 overflow-y-auto p-4" ref={chatContainerRef}>
+        <div className="space-y-6">
+            {chatHistory.map((message, index) => (
+                <div key={index} className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
+                {message.role === 'model' && (
+                    <Avatar className="h-8 w-8 border">
+                        <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
+                    </Avatar>
+                )}
+                <div className={`max-w-[75%] rounded-lg p-3 shadow-sm ${
+                        message.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-card'
+                    }`}>
+                      {message.role === 'user' ? (
+                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      ) : (
+                          <div className="markdown-container text-sm">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                  {message.content}
+                              </ReactMarkdown>
+                          </div>
+                      )}
+                </div>
+                {message.role === 'user' && (
+                    <Avatar className="h-8 w-8 border">
+                        <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
+                    </Avatar>
+                )}
+                </div>
+            ))}
+            {isLoading && (
+                <div className="flex items-start gap-4">
+                <Avatar className="h-8 w-8 border">
+                    <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
+                </Avatar>
+                <div className="max-w-[75%] rounded-lg p-3 bg-card">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm">Thinking...</span>
+                    </div>
+                </div>
+                </div>
+            )}
+        </div>
+      </CardContent>
+    </div>
+  );
+
+  return (
+    <SidebarProvider>
+      <div className="flex h-screen flex-col bg-background text-foreground font-body">
+        <header className="flex items-center justify-between border-b p-4 shadow-sm shrink-0">
+          <div className="flex items-center gap-2">
+              {isMobile && <SidebarTrigger />}
+              <GrugLogo className="text-primary" />
+              <h1 className="text-xl font-bold">Grug: PDF CHAT TOOL</h1>
+          </div>
+        </header>
+        
+        <div className="flex flex-1 overflow-hidden">
+            <Sidebar>
+                <SidebarContent className="p-0">
+                  <SidebarHeader>
+                    <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
+                        <Plus className="mr-2" /> New Chat
+                    </Button>
+                     <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="application/pdf" className="hidden" />
+                  </SidebarHeader>
+                    <SidebarMenu>
+                      {sessions.length === 0 && (
+                          <div className="px-4 text-sm text-muted-foreground text-center">
+                            Upload a PDF to start a new chat.
+                          </div>
+                      )}
+                      {sessions.map(session => (
+                        <SidebarMenuItem key={session.id}>
+                          <SidebarMenuButton 
+                              isActive={session.id === activeChatId} 
+                              onClick={() => selectChat(session.id)}
+                              className="justify-start truncate"
+                          >
+                            <MessageSquare />
+                            <span className="truncate">{session.pdfFile.name}</span>
+                          </SidebarMenuButton>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover:opacity-100" 
+                            onClick={(e) => deleteChat(e, session.id)}
+                            aria-label="Delete chat"
+                          >
+                              <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                </SidebarContent>
+            </Sidebar>
+            <main className="flex-1 overflow-hidden p-4">
+              <Card className="h-full w-full flex flex-col shadow-lg">
+                  {sessions.length === 0 ? renderWelcomeScreen() : (activeSession ? renderChatInterface() : renderWelcomeScreen())}
+              </Card>
+            </main>
+        </div>
+
+        <footer className="p-4 pt-0 shrink-0 border-t">
+          <form onSubmit={handleChatSubmit} className="flex items-center gap-2">
+            <Input
+              value={userInput}
+              onChange={(e) => setUserInput(e.target.value)}
+              placeholder={activeSession ? "Ask a question about the PDF..." : "Upload a PDF to start chatting"}
+              disabled={!activeSession || isLoading}
+              className="flex-1"
+            />
+            <Button type="submit" disabled={!activeSession || isLoading || !userInput.trim()}>
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send'}
+            </Button>
+          </form>
+        </footer>
+      </div>
+    </SidebarProvider>
+  );
 }
+
+    
