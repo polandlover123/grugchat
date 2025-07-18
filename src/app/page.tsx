@@ -14,10 +14,8 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.js',
-  import.meta.url,
-).toString();
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+
 
 type Message = {
   role: "user" | "model";
@@ -170,6 +168,40 @@ export default function Home() {
     setNumPages(numPages);
   }
 
+  const customTextRenderer = React.useCallback(
+    (textItem: any) => {
+      if (!highlightText || highlightText.length === 0) {
+        return textItem.str;
+      }
+  
+      const content = textItem.str;
+      let highlightedContent: (string | JSX.Element)[] = [content];
+  
+      highlightText.forEach((highlight) => {
+        if (!highlight) return;
+        let tempContent: (string | JSX.Element)[] = [];
+        highlightedContent.forEach((segment) => {
+          if (typeof segment === 'string') {
+            const parts = segment.split(new RegExp(`(${highlight.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi'));
+            parts.forEach((part, index) => {
+              if (index % 2 === 1) {
+                tempContent.push(<mark key={`${highlight}-${index}`} className="bg-yellow-300">{part}</mark>);
+              } else {
+                tempContent.push(part);
+              }
+            });
+          } else {
+            tempContent.push(segment);
+          }
+        });
+        highlightedContent = tempContent;
+      });
+      return <>{highlightedContent}</>;
+    },
+    [highlightText]
+  );
+  
+
   return (
     <div className="flex h-screen flex-col bg-background text-foreground font-body">
       <header className="flex items-center justify-between border-b p-4 shadow-sm shrink-0">
@@ -270,24 +302,7 @@ export default function Home() {
                                 key={`page_${index + 1}`} 
                                 pageNumber={index + 1}
                                 renderTextLayer={true}
-                                customTextRenderer={({ str }) => {
-                                  const textToHighlight = highlightText.find(h => str.includes(h));
-                                  if (textToHighlight) {
-                                      const parts = str.split(new RegExp(`(${textToHighlight})`, 'gi'));
-                                      return (
-                                          <>
-                                              {parts.map((part, i) =>
-                                                  part.toLowerCase() === textToHighlight.toLowerCase() ? (
-                                                      <mark key={i} className="bg-yellow-300">{part}</mark>
-                                                  ) : (
-                                                      part
-                                                  )
-                                              )}
-                                          </>
-                                      );
-                                  }
-                                  return str;
-                                }}
+                                customTextRenderer={customTextRenderer}
                               />
                           ))}
                       </Document>
