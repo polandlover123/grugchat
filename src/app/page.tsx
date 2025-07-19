@@ -355,8 +355,10 @@ export default function Home() {
                   onClick={() => selectChat(session.id)}
                   className="w-full justify-start pr-8"
                 >
-                  <MessageSquare className="mr-2 h-4 w-4 flex-shrink-0" />
-                  <span className="truncate min-w-0">{session.pdfFile.name}</span>
+                  <div className="flex items-center min-w-0">
+                    <MessageSquare className="mr-2 h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">{session.pdfFile.name}</span>
+                  </div>
                 </Button>
                 <Button
                   size="icon"
