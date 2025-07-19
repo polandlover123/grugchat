@@ -8,6 +8,11 @@ body {
 }
 
 @layer base {
+  html {
+    /* Responsive font size: scales between 14px and 16px */
+    font-size: clamp(0.875rem, 0.823rem + 0.26vw, 1rem);
+  }
+
   :root {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
