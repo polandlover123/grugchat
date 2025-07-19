@@ -287,8 +287,9 @@ export default function Home() {
                         size="sm"
                         variant={session.id === activeChatId ? "default" : "outline"}
                         onClick={() => selectChat(session.id)}
-                        className="w-full justify-start pl-3"
+                        className="w-full justify-start"
                     >
+                      <MessageSquare className="mr-2 h-4 w-4 flex-shrink-0" />
                       <span className="truncate">{session.pdfFile.name}</span>
                     </Button>
                     <Button 
@@ -331,5 +332,7 @@ export default function Home() {
       </div>
   );
 }
+
+    
 
     
