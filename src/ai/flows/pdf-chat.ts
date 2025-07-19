@@ -82,6 +82,12 @@ const pdfChatFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
+    if (output) {
+      // Use a regular expression to find list markers (b), c), d), etc.) 
+      // that are not preceded by a newline and insert one. This fixes formatting
+      // issues where the AI puts all options on a single line.
+      output.answer = output.answer.replace(/(\S)\s+(\*\*([b-z])\))/g, '$1\n\n$2');
+    }
     return output!;
   }
 );
