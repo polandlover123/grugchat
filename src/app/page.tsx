@@ -199,11 +199,11 @@ export default function Home() {
               <Eye className="h-4 w-4" />
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl h-[90vh]">
+          <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
             <DialogHeader>
               <DialogTitle className="truncate">{activeSession?.pdfFile.name}</DialogTitle>
             </DialogHeader>
-            <div className="h-full w-full">
+            <div className="flex-1 w-full h-full">
               <embed src={activeSession?.pdfDataUri} type="application/pdf" width="100%" height="100%" />
             </div>
           </DialogContent>
