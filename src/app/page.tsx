@@ -257,7 +257,7 @@ export default function Home() {
   return (
     <div className="flex h-screen bg-background text-foreground font-body">
       {/* Sidebar */}
-      <aside className="w-[300px] flex-col border-r bg-card hidden sm:flex">
+      <aside className="w-1/4 flex-col border-r bg-card hidden sm:flex">
         <div className="p-4 border-b">
           <div className="flex flex-col items-start gap-1">
             <div className="flex items-center gap-2">
