@@ -283,9 +283,9 @@ export default function Home() {
                 {sessions.map(session => (
                   <div key={session.id} className="relative group">
                     <Button 
-                        variant={session.id === activeChatId ? "secondary" : "ghost"}
+                        variant={session.id === activeChatId ? "default" : "outline"}
                         onClick={() => selectChat(session.id)}
-                        className="w-full justify-start truncate pr-8"
+                        className="w-full justify-start truncate"
                     >
                       <MessageSquare className="mr-2 h-4 w-4" />
                       <span className="truncate">{session.pdfFile.name}</span>
