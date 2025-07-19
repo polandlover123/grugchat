@@ -20,6 +20,7 @@ const PdfChatInputSchema = z.object({
     ),
   question: z.string().describe('The user question about the PDF content.'),
   chatHistory: z.string().optional().describe('Previous chat history to maintain context.'),
+  elifMode: z.boolean().optional().describe("Whether to explain the answer in simple terms (Explain Like I'm Five)."),
 });
 export type PdfChatInput = z.infer<typeof PdfChatInputSchema>;
 
@@ -56,6 +57,9 @@ Your Core Tutoring Principles:
 8.  **Limitation on Flashcards:** You CANNOT create "flashcards." If a user asks for flashcards, you must politely decline and offer to quiz them instead. Example: "I can't create flashcards, but I'd be happy to quiz you on the key concepts from that chapter. Would you like to start?"
 
 9.  **Be Encouraging:** Maintain a positive and encouraging tone throughout the conversation. Frame feedback constructively and celebrate their progress.
+{{#if elifMode}}
+10. **Explain Like I'm Five (ELIF) Mode:** You MUST explain your answer in very simple, easy-to-understand language, using simple words and short sentences. Use analogies that a five-year-old would understand.
+{{/if}}
 
 PDF Content: {{media url=pdfDataUri}}
 
