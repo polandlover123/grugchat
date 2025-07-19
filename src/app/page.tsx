@@ -100,14 +100,15 @@ export default function Home() {
     const newUserMessage: Message = { role: "user", content: userInput };
     const currentInput = userInput;
 
+    const updatedHistoryWithUser = [...activeSession.chatHistory, newUserMessage];
     setSessions(prev => prev.map(s => 
-      s.id === activeChatId ? { ...s, chatHistory: [...s.chatHistory, newUserMessage] } : s
+      s.id === activeChatId ? { ...s, chatHistory: updatedHistoryWithUser } : s
     ));
     setUserInput("");
     setIsLoading(true);
 
     try {
-      const historyString = activeSession.chatHistory
+      const historyString = updatedHistoryWithUser
         .map((msg) => `${msg.role}: ${msg.content}`)
         .join("\n");
 
@@ -120,7 +121,7 @@ export default function Home() {
 
       const modelMessage: Message = { role: "model", content: response.answer };
       setSessions(prev => prev.map(s => 
-        s.id === activeChatId ? { ...s, chatHistory: [...s.chatHistory, modelMessage] } : s
+        s.id === activeChatId ? { ...s, chatHistory: [...s.chatHistory, newUserMessage, modelMessage] } : s
       ));
     } catch (error) {
       console.error(error);
@@ -179,7 +180,46 @@ export default function Home() {
     </div>
   );
 
-  const renderChatInterface = () => (
+  const AnimatedMessage = ({ message }: { message: Message }) => {
+    const [displayedContent, setDisplayedContent] = useState('');
+    const fullContent = message.content;
+  
+    useEffect(() => {
+      setDisplayedContent('');
+      if (message.role === 'model') {
+        let i = 0;
+        const intervalId = setInterval(() => {
+          setDisplayedContent(fullContent.slice(0, i + 1));
+          i++;
+          if (i > fullContent.length) {
+            clearInterval(intervalId);
+          }
+        }, 20); // Adjust typing speed here
+        return () => clearInterval(intervalId);
+      } else {
+        setDisplayedContent(fullContent);
+      }
+    }, [fullContent, message.role]);
+
+    useEffect(() => {
+        if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+    }, [displayedContent]);
+  
+    return (
+        <div className="markdown-container text-sm">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {displayedContent}
+            </ReactMarkdown>
+        </div>
+    );
+  };
+
+  const renderChatInterface = () => {
+    const lastMessage = chatHistory.length > 0 ? chatHistory[chatHistory.length - 1] : null;
+
+    return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between gap-3 border-b p-4 shrink-0">
         <div className="flex items-center gap-3">
@@ -189,7 +229,7 @@ export default function Home() {
       </div>
       <div className="flex-1 overflow-y-auto p-4" ref={chatContainerRef}>
         <div className="space-y-6">
-            {chatHistory.map((message, index) => (
+            {chatHistory.slice(0, -1).map((message, index) => (
                 <div key={index} className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
                 {message.role === 'model' && (
                     <Avatar className="h-8 w-8 border">
@@ -214,6 +254,37 @@ export default function Home() {
                 )}
                 </div>
             ))}
+
+            {lastMessage && (
+                 <div key={chatHistory.length -1} className={`flex items-start gap-4 ${lastMessage.role === 'user' ? 'justify-end' : ''}`}>
+                    {lastMessage.role === 'model' && (
+                        <Avatar className="h-8 w-8 border">
+                            <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
+                        </Avatar>
+                    )}
+                    <div className={`max-w-[75%] rounded-lg p-3 shadow-sm ${
+                            lastMessage.role === 'user'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-card'
+                        }`}>
+                            {lastMessage.role === 'model' && !isLoading ? (
+                                <AnimatedMessage message={lastMessage} />
+                            ) : (
+                                <div className="markdown-container text-sm">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {lastMessage.content}
+                                    </ReactMarkdown>
+                                </div>
+                            )}
+                    </div>
+                    {lastMessage.role === 'user' && (
+                        <Avatar className="h-8 w-8 border">
+                            <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
+                        </Avatar>
+                    )}
+                </div>
+            )}
+
             {isLoading && (
                 <div className="flex items-start gap-4">
                 <Avatar className="h-8 w-8 border">
@@ -251,7 +322,7 @@ export default function Home() {
            </p>
         </div>
     </div>
-  );
+  )};
 
   return (
     <div className="flex h-screen bg-background text-foreground font-body">
@@ -282,7 +353,7 @@ export default function Home() {
               </div>
             )}
             {sessions.map(session => (
-              <div key={session.id} className="group relative w-1/2">
+              <div key={session.id} className="group relative w-3/4">
                 <Button
                   size="sm"
                   variant={session.id === activeChatId ? "default" : "outline"}
