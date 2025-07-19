@@ -268,7 +268,8 @@ export default function Home() {
           </div>
           <div className="p-4">
              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => fileInputRef.current?.click()}>
-                <Plus className="mr-2 h-4 w-4" /> New Chat
+                <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="truncate">New Chat</span>
             </Button>
             <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="application/pdf" className="hidden" />
           </div>
@@ -286,7 +287,7 @@ export default function Home() {
                         size="sm"
                         variant={session.id === activeChatId ? "default" : "outline"}
                         onClick={() => selectChat(session.id)}
-                        className="w-full justify-start"
+                        className="w-full justify-start truncate"
                     >
                       <MessageSquare className="mr-2 h-4 w-4 flex-shrink-0" />
                       <span className="truncate">{session.pdfFile.name}</span>
@@ -331,5 +332,3 @@ export default function Home() {
       </div>
   );
 }
-
-    
