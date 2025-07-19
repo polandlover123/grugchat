@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect, type SVGProps } from "react";
+import { useState, useRef, useEffect, type SVGProps, memo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { pdfChat } from "@/ai/flows/pdf-chat";
 import { Button } from "@/components/ui/button";
@@ -22,8 +22,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 type Message = {
@@ -38,6 +36,131 @@ type ChatSession = {
   chatHistory: Message[];
 }
 
+const AnimatedMessage = ({ message, onAnimationComplete }: { message: Message, onAnimationComplete: () => void }) => {
+  const [displayedContent, setDisplayedContent] = useState('');
+  const fullContent = message.content;
+
+  useEffect(() => {
+    setDisplayedContent('');
+    if (message.role === 'model') {
+      let i = 0;
+      const intervalId = setInterval(() => {
+        setDisplayedContent(fullContent.slice(0, i + 1));
+        i++;
+        if (i > fullContent.length) {
+          clearInterval(intervalId);
+          onAnimationComplete();
+        }
+      }, 20); // Adjust typing speed here
+      return () => clearInterval(intervalId);
+    } else {
+      setDisplayedContent(fullContent);
+      onAnimationComplete();
+    }
+  }, [fullContent, message.role, onAnimationComplete]);
+
+  return (
+      <div className="markdown-container text-sm">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {displayedContent}
+          </ReactMarkdown>
+      </div>
+  );
+};
+
+const ChatMessages = memo(({ chatHistory, isLoading }: { chatHistory: Message[], isLoading: boolean}) => {
+    const chatContainerRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [chatHistory, isLoading]);
+
+    const lastMessage = chatHistory.length > 0 ? chatHistory[chatHistory.length - 1] : null;
+
+    return (
+      <div className="flex-1 overflow-y-auto p-4" ref={chatContainerRef}>
+        <div className="space-y-6">
+            {chatHistory.slice(0, -1).map((message, index) => (
+                <div key={index} className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
+                {message.role === 'model' && (
+                    <Avatar className="h-8 w-8 border">
+                        <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
+                    </Avatar>
+                )}
+                <div className={`max-w-[75%] rounded-lg p-3 shadow-sm ${
+                        message.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-card'
+                    }`}>
+                     <div className="markdown-container text-sm">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {message.content}
+                        </ReactMarkdown>
+                    </div>
+                </div>
+                {message.role === 'user' && (
+                    <Avatar className="h-8 w-8 border">
+                        <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
+                    </Avatar>
+                )}
+                </div>
+            ))}
+
+            {lastMessage && (
+                 <div key={chatHistory.length -1} className={`flex items-start gap-4 ${lastMessage.role === 'user' ? 'justify-end' : ''}`}>
+                    {lastMessage.role === 'model' && (
+                        <Avatar className="h-8 w-8 border">
+                            <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
+                        </Avatar>
+                    )}
+                    <div className={`max-w-[75%] rounded-lg p-3 shadow-sm ${
+                            lastMessage.role === 'user'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-card'
+                        }`}>
+                            {lastMessage.role === 'model' && !isLoading ? (
+                                <AnimatedMessage message={lastMessage} onAnimationComplete={scrollToBottom} />
+                            ) : (
+                                <div className="markdown-container text-sm">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {lastMessage.content}
+                                    </ReactMarkdown>
+                                </div>
+                            )}
+                    </div>
+                    {lastMessage.role === 'user' && (
+                        <Avatar className="h-8 w-8 border">
+                            <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
+                        </Avatar>
+                    )}
+                </div>
+            )}
+
+            {isLoading && (
+                <div className="flex items-start gap-4">
+                <Avatar className="h-8 w-8 border">
+                    <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
+                </Avatar>
+                <div className="max-w-[75%] rounded-lg p-3 bg-card">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm">Thinking...</span>
+                    </div>
+                </div>
+                </div>
+            )}
+        </div>
+      </div>
+    );
+});
+ChatMessages.displayName = 'ChatMessages';
+
 export default function Home() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -46,16 +169,9 @@ export default function Home() {
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const activeSession = sessions.find(s => s.id === activeChatId) || null;
   const chatHistory = activeSession?.chatHistory || [];
-
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  }, [chatHistory, isLoading]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -179,45 +295,7 @@ export default function Home() {
     </div>
   );
 
-  const AnimatedMessage = ({ message }: { message: Message }) => {
-    const [displayedContent, setDisplayedContent] = useState('');
-    const fullContent = message.content;
-  
-    useEffect(() => {
-      setDisplayedContent('');
-      if (message.role === 'model') {
-        let i = 0;
-        const intervalId = setInterval(() => {
-          setDisplayedContent(fullContent.slice(0, i + 1));
-          i++;
-          if (i > fullContent.length) {
-            clearInterval(intervalId);
-          }
-        }, 20); // Adjust typing speed here
-        return () => clearInterval(intervalId);
-      } else {
-        setDisplayedContent(fullContent);
-      }
-    }, [fullContent, message.role]);
-
-    useEffect(() => {
-        if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-        }
-    }, [displayedContent]);
-  
-    return (
-        <div className="markdown-container text-sm">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {displayedContent}
-            </ReactMarkdown>
-        </div>
-    );
-  };
-
   const renderChatInterface = () => {
-    const lastMessage = chatHistory.length > 0 ? chatHistory[chatHistory.length - 1] : null;
-
     return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between gap-3 border-b p-4 shrink-0">
@@ -226,79 +304,7 @@ export default function Home() {
           <h2 className="text-lg font-medium truncate">{activeSession?.pdfFile.name}</h2>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-4" ref={chatContainerRef}>
-        <div className="space-y-6">
-            {chatHistory.slice(0, -1).map((message, index) => (
-                <div key={index} className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
-                {message.role === 'model' && (
-                    <Avatar className="h-8 w-8 border">
-                        <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
-                    </Avatar>
-                )}
-                <div className={`max-w-[75%] rounded-lg p-3 shadow-sm ${
-                        message.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-card'
-                    }`}>
-                     <div className="markdown-container text-sm">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {message.content}
-                        </ReactMarkdown>
-                    </div>
-                </div>
-                {message.role === 'user' && (
-                    <Avatar className="h-8 w-8 border">
-                        <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
-                    </Avatar>
-                )}
-                </div>
-            ))}
-
-            {lastMessage && (
-                 <div key={chatHistory.length -1} className={`flex items-start gap-4 ${lastMessage.role === 'user' ? 'justify-end' : ''}`}>
-                    {lastMessage.role === 'model' && (
-                        <Avatar className="h-8 w-8 border">
-                            <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
-                        </Avatar>
-                    )}
-                    <div className={`max-w-[75%] rounded-lg p-3 shadow-sm ${
-                            lastMessage.role === 'user'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-card'
-                        }`}>
-                            {lastMessage.role === 'model' && !isLoading ? (
-                                <AnimatedMessage message={lastMessage} />
-                            ) : (
-                                <div className="markdown-container text-sm">
-                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                        {lastMessage.content}
-                                    </ReactMarkdown>
-                                </div>
-                            )}
-                    </div>
-                    {lastMessage.role === 'user' && (
-                        <Avatar className="h-8 w-8 border">
-                            <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
-                        </Avatar>
-                    )}
-                </div>
-            )}
-
-            {isLoading && (
-                <div className="flex items-start gap-4">
-                <Avatar className="h-8 w-8 border">
-                    <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
-                </Avatar>
-                <div className="max-w-[75%] rounded-lg p-3 bg-card">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm">Thinking...</span>
-                    </div>
-                </div>
-                </div>
-            )}
-        </div>
-      </div>
+      <ChatMessages chatHistory={chatHistory} isLoading={isLoading} />
        <div className="border-t p-4 shrink-0">
           <form onSubmit={handleChatSubmit} className="flex items-center gap-2">
             <Input
@@ -400,5 +406,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
