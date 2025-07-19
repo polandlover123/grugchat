@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bot, User, Upload, Trash2, Loader2, Paperclip, Plus, MessageSquare, BookText, Eye } from 'lucide-react';
+import { Bot, User, Upload, Trash2, Loader2, Paperclip, Plus, MessageSquare, BookText } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
@@ -22,13 +22,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -193,21 +186,6 @@ export default function Home() {
           <Paperclip className="text-primary h-5 w-5"/>
           <h2 className="text-lg font-medium truncate">{activeSession?.pdfFile.name}</h2>
         </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="icon" aria-label="Preview PDF">
-              <Eye className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
-            <DialogHeader>
-              <DialogTitle className="truncate">{activeSession?.pdfFile.name}</DialogTitle>
-            </DialogHeader>
-            <div className="flex-1 w-full h-full">
-              <embed src={activeSession?.pdfDataUri} type="application/pdf" width="100%" height="100%" />
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
       <div className="flex-1 overflow-y-auto p-4" ref={chatContainerRef}>
         <div className="space-y-6">
