@@ -348,7 +348,7 @@ export default function Home() {
               </div>
             )}
             {sessions.map(session => (
-              <div key={session.id} className="group relative w-full">
+              <div key={session.id} className="group relative w-full overflow-hidden">
                 <Button
                   size="sm"
                   variant={session.id === activeChatId ? "default" : "outline"}
@@ -398,8 +398,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
-
-    
-
