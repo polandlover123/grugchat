@@ -267,7 +267,7 @@ export default function Home() {
             </div>
           </div>
           <div className="p-4">
-             <Button variant="outline" className="w-full justify-start" onClick={() => fileInputRef.current?.click()}>
+             <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => fileInputRef.current?.click()}>
                 <Plus className="mr-2 h-4 w-4" /> New Chat
             </Button>
             <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="application/pdf" className="hidden" />
@@ -283,6 +283,7 @@ export default function Home() {
                 {sessions.map(session => (
                   <div key={session.id} className="relative group">
                     <Button 
+                        size="sm"
                         variant={session.id === activeChatId ? "default" : "outline"}
                         onClick={() => selectChat(session.id)}
                         className="w-full justify-start truncate"
