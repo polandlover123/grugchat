@@ -246,6 +246,9 @@ export default function Home() {
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send'}
             </Button>
           </form>
+           <p className="text-xs text-muted-foreground text-center mt-2">
+            Running on model: googleai/gemini-2.0-flash
+           </p>
         </div>
     </div>
   );
