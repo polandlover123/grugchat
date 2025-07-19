@@ -264,11 +264,11 @@ export default function Home() {
                 <BookText className="text-primary h-6 w-6" />
                 <h1 className="text-xl font-bold">Grug</h1>
             </div>
-            <p className="text-xs text-muted-foreground ml-8">PDF Viewer Created by Caveman Software</p>
+            <p className="text-xs text-muted-foreground ml-8">PDF Chat tool Created by Caveman Software</p>
           </div>
         </div>
         <div className="p-4">
-          <Button size="sm" variant="outline" className="w-5/6 justify-start" onClick={() => fileInputRef.current?.click()}>
+          <Button size="sm" variant="outline" className="w-[83.33%] justify-start" onClick={() => fileInputRef.current?.click()}>
             <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
             <span className="truncate">New Chat</span>
           </Button>
