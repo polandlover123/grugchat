@@ -257,7 +257,7 @@ export default function Home() {
   return (
     <div className="flex h-screen bg-background text-foreground font-body">
       {/* Sidebar */}
-      <aside className="w-1/4 flex-col border-r bg-card hidden sm:flex">
+      <aside className="w-[150px] flex-col border-r bg-card hidden sm:flex">
         <div className="p-4 border-b">
           <div className="flex flex-col items-start gap-1">
             <div className="flex items-center gap-2">
@@ -283,12 +283,12 @@ export default function Home() {
               </div>
             )}
             {sessions.map(session => (
-              <div key={session.id} className="group relative">
+              <div key={session.id} className="group relative w-1/2">
                 <Button
                   size="sm"
                   variant={session.id === activeChatId ? "default" : "outline"}
                   onClick={() => selectChat(session.id)}
-                  className="w-1/2 justify-start"
+                  className="w-full justify-start pr-8"
                 >
                   <MessageSquare className="mr-2 h-4 w-4 flex-shrink-0" />
                   <span className="truncate">{session.pdfFile.name}</span>
