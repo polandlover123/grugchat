@@ -257,14 +257,14 @@ export default function Home() {
   return (
     <div className="flex h-screen bg-background text-foreground font-body">
       {/* Sidebar */}
-      <aside className="w-64 flex-col border-r bg-card hidden sm:flex">
+      <aside className="w-32 flex-col border-r bg-card hidden sm:flex">
         <div className="p-4 border-b">
             <div className="flex flex-col items-start gap-1">
               <div className="flex items-center gap-2">
                   <BookText className="text-primary h-6 w-6" />
                   <h1 className="text-xl font-bold">Grug</h1>
               </div>
-              <p className="text-xs text-muted-foreground ml-8">PDF Chat by Caveman Software</p>
+              <p className="text-xs text-muted-foreground ml-8">PDF Chat</p>
           </div>
         </div>
         <div className="p-4">
@@ -283,24 +283,26 @@ export default function Home() {
                   </div>
               )}
               {sessions.map(session => (
-                <div key={session.id} className="relative group">
-                  <Button
-                      size="sm"
-                      variant={session.id === activeChatId ? "default" : "outline"}
-                      onClick={() => selectChat(session.id)}
-                      className="w-full justify-start pr-8"
-                  >
-                    <MessageSquare className="mr-2 h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">{session.pdfFile.name}</span>
-                  </Button>
-                  <div
-                      className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100"
-                      onClick={(e) => handleDeleteRequest(e, session.id)}
-                      aria-label="Delete chat"
+                  <div key={session.id} className="group relative">
+                    <Button
+                        size="sm"
+                        variant={session.id === activeChatId ? "default" : "outline"}
+                        onClick={() => selectChat(session.id)}
+                        className="w-full justify-start pr-8"
                     >
-                      <Trash2 className="h-4 w-4" />
+                        <MessageSquare className="mr-2 h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">{session.pdfFile.name}</span>
+                    </Button>
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 opacity-0 group-hover:opacity-100"
+                        onClick={(e) => handleDeleteRequest(e, session.id)}
+                        aria-label="Delete chat"
+                        >
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
-                </div>
               ))}
             </div>
         </ScrollArea>
