@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 type Message = {
   role: "user" | "model";
@@ -254,81 +255,79 @@ export default function Home() {
   );
 
   return (
-      <div className="flex h-screen bg-background text-foreground font-body">
-        {/* Sidebar */}
-        <aside className="w-64 flex-col border-r bg-card hidden sm:flex">
-          <div className="p-4 border-b">
-              <div className="flex flex-col items-start gap-1">
-                <div className="flex items-center gap-2">
-                    <BookText className="text-primary h-6 w-6" />
-                    <h1 className="text-xl font-bold">Grug</h1>
-                </div>
-                <p className="text-xs text-muted-foreground ml-8">PDF Chat by Caveman Software</p>
-            </div>
+    <div className="flex h-screen bg-background text-foreground font-body">
+      {/* Sidebar */}
+      <aside className="w-64 flex-col border-r bg-card hidden sm:flex">
+        <div className="p-4 border-b">
+            <div className="flex flex-col items-start gap-1">
+              <div className="flex items-center gap-2">
+                  <BookText className="text-primary h-6 w-6" />
+                  <h1 className="text-xl font-bold">Grug</h1>
+              </div>
+              <p className="text-xs text-muted-foreground ml-8">PDF Chat by Caveman Software</p>
           </div>
-          <div className="p-4">
-             <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => fileInputRef.current?.click()}>
-                <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
-                <span className="truncate">New Chat</span>
-            </Button>
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="application/pdf" className="hidden" />
-          </div>
+        </div>
+        <div className="p-4">
+          <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => fileInputRef.current?.click()}>
+              <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
+              <span className="truncate">New Chat</span>
+          </Button>
+          <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="application/pdf" className="hidden" />
+        </div>
 
-          <ScrollArea className="flex-1">
-              <div className="p-4 pt-0 space-y-2">
-                {sessions.length === 0 && (
-                    <div className="px-4 text-sm text-muted-foreground text-center">
-                      Upload a PDF to start a new chat.
-                    </div>
-                )}
-                {sessions.map(session => (
-                  <div key={session.id} className="relative group">
-                    <Button 
-                        size="sm"
-                        variant={session.id === activeChatId ? "default" : "outline"}
-                        onClick={() => selectChat(session.id)}
-                        className="w-full justify-start pr-8"
-                    >
-                      <MessageSquare className="mr-2 h-4 w-4 flex-shrink-0" />
-                      <span className="truncate">{session.pdfFile.name}</span>
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100" 
+        <ScrollArea className="flex-1">
+            <div className="p-4 pt-0 space-y-2">
+              {sessions.length === 0 && (
+                  <div className="px-4 text-sm text-muted-foreground text-center">
+                    Upload a PDF to start a new chat.
+                  </div>
+              )}
+              {sessions.map(session => (
+                <div key={session.id} className="relative group">
+                  <Button
+                      size="sm"
+                      variant={session.id === activeChatId ? "default" : "outline"}
+                      onClick={() => selectChat(session.id)}
+                      className="w-full justify-start pr-8"
+                  >
+                    <MessageSquare className="mr-2 h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">{session.pdfFile.name}</span>
+                  </Button>
+                  <div
+                      className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100"
                       onClick={(e) => handleDeleteRequest(e, session.id)}
                       aria-label="Delete chat"
                     >
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
+                      <Trash2 className="h-4 w-4" />
                   </div>
-                ))}
-              </div>
-          </ScrollArea>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 flex flex-col">
-            <div className="h-full w-full flex flex-col shadow-lg">
-                {sessions.length === 0 ? renderWelcomeScreen() : (activeSession ? renderChatInterface() : renderWelcomeScreen())}
+                </div>
+              ))}
             </div>
-        </main>
-        
-        <AlertDialog open={!!sessionToDelete} onOpenChange={(open) => !open && setSessionToDelete(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure you want to delete this chat?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the chat history for
-                "{sessions.find(s => s.id === sessionToDelete)?.pdfFile.name}".
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setSessionToDelete(null)}>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={confirmDeleteChat}>Delete</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+        </ScrollArea>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col">
+          <div className="h-full w-full flex flex-col shadow-lg">
+              {sessions.length === 0 ? renderWelcomeScreen() : (activeSession ? renderChatInterface() : renderWelcomeScreen())}
+          </div>
+      </main>
+      
+      <AlertDialog open={!!sessionToDelete} onOpenChange={(open) => !open && setSessionToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this chat?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the chat history for
+              "{sessions.find(s => s.id === sessionToDelete)?.pdfFile.name}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setSessionToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteChat}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }
