@@ -348,16 +348,16 @@ export default function Home() {
               </div>
             )}
             {sessions.map(session => (
-              <div key={session.id} className="group relative w-full overflow-hidden">
+              <div key={session.id} className="group relative w-full">
                 <Button
                   size="sm"
                   variant={session.id === activeChatId ? "default" : "outline"}
                   onClick={() => selectChat(session.id)}
                   className="w-full justify-start pr-8"
                 >
-                  <div className="flex items-center min-w-0">
-                    <MessageSquare className="mr-2 h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">{session.pdfFile.name}</span>
+                  <MessageSquare className="mr-2 h-4 w-4 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="truncate block">{session.pdfFile.name}</span>
                   </div>
                 </Button>
                 <Button
