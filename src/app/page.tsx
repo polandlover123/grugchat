@@ -44,7 +44,6 @@ export default function Home() {
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
-  const [isElifMode, setIsElifMode] = useState(false);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -117,7 +116,6 @@ export default function Home() {
         pdfDataUri: activeSession.pdfDataUri,
         question: currentInput,
         chatHistory: historyString,
-        elifMode: isElifMode,
       });
 
       const modelMessage: Message = { role: "model", content: response.answer };
@@ -302,10 +300,6 @@ export default function Home() {
         </div>
       </div>
        <div className="border-t p-4 shrink-0">
-            <div className="flex items-center space-x-2 mb-4">
-                <Switch id="elif-mode" checked={isElifMode} onCheckedChange={setIsElifMode} disabled={isLoading} />
-                <Label htmlFor="elif-mode" className="cursor-pointer">Explain Like I'm Five</Label>
-            </div>
           <form onSubmit={handleChatSubmit} className="flex items-center gap-2">
             <Input
               value={userInput}

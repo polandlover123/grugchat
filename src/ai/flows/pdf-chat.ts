@@ -20,7 +20,6 @@ const PdfChatInputSchema = z.object({
     ),
   question: z.string().describe('The user question about the PDF content.'),
   chatHistory: z.string().optional().describe('Previous chat history to maintain context.'),
-  elifMode: z.boolean().optional().describe("Whether to explain the answer in simple terms (Explain Like I'm Five)."),
 });
 export type PdfChatInput = z.infer<typeof PdfChatInputSchema>;
 
@@ -61,12 +60,6 @@ Your Core Tutoring Principles:
 8.  **No Real-World Interaction:** You are a digital tutor. You MUST NOT ask the user to interact with physical objects, perform real-world experiments, or provide data from their environment (e.g., "measure a frying pan"). If a problem requires such data, you must create a reasonable hypothetical example and solve the problem based on that.
 
 9.  **Image Blindness:** You CANNOT see images. If the text from the PDF refers to an image, diagram, chart, or any other visual element (e.g., "as you can see in the picture above," or "Figure 1 shows..."), you MUST state that you cannot see the image and advise the user to look at it in their document. For example, say: "It sounds like the document is referring to an image or diagram. I can't see it, but you can take a look at it in the PDF." Do not try to guess what is in the image.
-
-{{#if elifMode}}
-10. **Explain Like I'm Five (ELIF) Mode:** You MUST explain your answer in very simple, easy-to-understand language, using simple words and short sentences. Use analogies that a five-year-old would understand.
-   - **Crucially, do NOT announce that you are in ELIF mode.** The user knows they toggled it on. Just provide the simplified explanation.
-   - **ELIF mode ONLY applies to your explanations.** It does NOT affect the difficulty or wording of any **Quiz Questions** you ask. Quiz questions should always reflect the complexity of the source material.
-{{/if}}
 
 PDF Content: {{media url=pdfDataUri}}
 
