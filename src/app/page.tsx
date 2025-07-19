@@ -126,7 +126,7 @@ export default function Home() {
     } catch (error) {
       console.error(error);
        setSessions(prev => prev.map(s => 
-        s.id === activeChatId ? { ...s, chatHistory: updatedHistoryWithUser } : s
+        s.id === activeChatId ? { ...s, chatHistory: updatedHistoryWithUser.slice(0, -1) } : s
       ));
       setUserInput(currentInput);
       toast({
@@ -353,12 +353,12 @@ export default function Home() {
               </div>
             )}
             {sessions.map(session => (
-              <div key={session.id} className="group relative">
+              <div key={session.id} className="group relative w-3/4">
                 <Button
                   size="sm"
                   variant={session.id === activeChatId ? "default" : "outline"}
                   onClick={() => selectChat(session.id)}
-                  className="w-3/4 justify-start pr-8"
+                  className="w-full justify-start pr-8"
                 >
                   <MessageSquare className="mr-2 h-4 w-4 flex-shrink-0" />
                   <span className="truncate">{session.pdfFile.name}</span>
