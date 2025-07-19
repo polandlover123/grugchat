@@ -267,8 +267,8 @@ export default function Home() {
             </div>
           </div>
           <div className="p-4">
-             <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
-                <Plus className="mr-2" /> New Chat
+             <Button variant="outline" className="w-full justify-start" onClick={() => fileInputRef.current?.click()}>
+                <Plus className="mr-2 h-4 w-4" /> New Chat
             </Button>
             <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="application/pdf" className="hidden" />
           </div>
@@ -330,5 +330,3 @@ export default function Home() {
       </div>
   );
 }
-
-    
