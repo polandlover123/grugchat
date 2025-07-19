@@ -356,7 +356,7 @@ export default function Home() {
                   className="w-full justify-start pr-8"
                 >
                   <MessageSquare className="mr-2 h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">{session.pdfFile.name}</span>
+                  <span className="truncate min-w-0">{session.pdfFile.name}</span>
                 </Button>
                 <Button
                   size="icon"
