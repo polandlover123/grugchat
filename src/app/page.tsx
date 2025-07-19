@@ -267,7 +267,7 @@ export default function Home() {
           </div>
         </div>
         <div className="p-4">
-          <Button size="sm" variant="outline" className="w-11/12 justify-start" onClick={() => fileInputRef.current?.click()}>
+          <Button size="sm" variant="outline" className="w-1/2 justify-start" onClick={() => fileInputRef.current?.click()}>
             <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
             <span className="truncate">New Chat</span>
           </Button>
@@ -282,7 +282,7 @@ export default function Home() {
               </div>
             )}
             {sessions.map(session => (
-              <div key={session.id} className="group relative w-11/12">
+              <div key={session.id} className="group relative w-1/2">
                 <Button
                   size="sm"
                   variant={session.id === activeChatId ? "default" : "outline"}
