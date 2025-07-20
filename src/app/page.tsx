@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bot, User, Upload, Trash2, Loader2, Paperclip, Plus, MessageSquare } from 'lucide-react';
+import { Bot, User, Upload, Trash2, Loader2, Paperclip, Plus, MessageSquare, BookText } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
@@ -22,8 +22,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { cn } from "@/lib/utils";
-import { CustomWelcomeIcon } from "@/components/icons/custom-welcome-icon";
-import { CustomBookIcon } from "@/components/icons/custom-book-icon";
 
 type Message = {
   role: "user" | "model";
@@ -36,6 +34,22 @@ type ChatSession = {
   pdfDataUri: string;
   chatHistory: Message[];
 }
+
+const WelcomeIcon = (props: SVGProps<SVGSVGElement>) => (
+    <svg
+        width="100"
+        height="100"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+    >
+        <path
+            d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20ZM8 12H16V14H8V12ZM8 16H13V18H8V16Z"
+            fill="currentColor"
+        />
+    </svg>
+);
 
 const AnimatedMessage = ({ message, onAnimationComplete }: { message: Message, onAnimationComplete: () => void }) => {
   const [displayedContent, setDisplayedContent] = useState('');
@@ -285,7 +299,7 @@ export default function Home() {
 
   const renderWelcomeScreen = () => (
      <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-8">
-        <CustomWelcomeIcon className="text-muted-foreground/50" />
+        <WelcomeIcon className="text-muted-foreground/50" />
         <h2 className="text-2xl font-semibold">Grug (Rhymes with Grug)</h2>
         <p className="text-muted-foreground">Upload a PDF document to start a conversation.</p>
         <Button onClick={() => fileInputRef.current?.click()}>
@@ -331,7 +345,7 @@ export default function Home() {
         <div className="p-4 border-b">
           <div className="flex flex-col items-start gap-1">
             <div className="flex items-center gap-2">
-                <CustomBookIcon className="h-6 w-6" />
+                <BookText className="h-6 w-6" />
                 <h1 className="text-xl font-bold">Grug</h1>
             </div>
             <p className="text-xs text-muted-foreground ml-8">PDF Chat tool Created by Caveman Software</p>
