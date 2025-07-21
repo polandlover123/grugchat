@@ -11,6 +11,7 @@ import { User, Upload, Trash2, Loader2, Paperclip, Plus, MessageSquare } from 'l
 import { GrugIcon } from "@/components/icons/custom-icon";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import Header from '@/components/app/header';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -339,18 +340,10 @@ export default function Home() {
   )};
 
   return (
-    <div className="flex h-screen bg-background text-foreground font-body">
+    <div className="flex h-full bg-background text-foreground font-body">
+      <Header />
       {/* Sidebar */}
       <aside className="w-1/6 flex-col border-r bg-card hidden sm:flex">
-        <div className="p-4 border-b">
-          <div className="flex flex-col items-start gap-1">
-            <div className="flex items-center gap-2">
-                <GrugIcon className="h-6 w-6"/>
-                <h1 className="text-xl font-bold">Grug</h1>
-            </div>
-            <p className="text-xs text-muted-foreground ml-8">PDF Chat tool Created by Caveman Software</p>
-          </div>
-        </div>
         <div className="p-4">
           <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => fileInputRef.current?.click()}>
             <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
