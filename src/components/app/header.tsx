@@ -10,7 +10,10 @@ export default function Header() {
         <h1 className="text-xl font-bold">Grug Chat</h1>
       </Link>
       <div className="flex items-center gap-4">
-        <nav>
+        <nav className="flex items-center gap-4">
+          <a href="https://grugai.cavemansoftware.org" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            Grughub
+          </a>
           <Link href="/contact" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             Contact Us
           </Link>
