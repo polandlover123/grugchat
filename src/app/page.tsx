@@ -333,7 +333,7 @@ export default function Home() {
             </Button>
           </form>
            <p className="text-xs text-muted-foreground text-center mt-2">
-            Running on model: googleai/gemini-flash-1.5
+            Running on model: googleai/gemini-1.5-flash
            </p>
         </div>
     </div>
