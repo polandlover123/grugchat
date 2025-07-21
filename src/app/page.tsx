@@ -7,8 +7,8 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bot, User, Upload, Trash2, Loader2, Paperclip, Plus, MessageSquare } from 'lucide-react';
-import { CustomIcon } from "@/components/icons/custom-icon";
+import { User, Upload, Trash2, Loader2, Paperclip, Plus, MessageSquare } from 'lucide-react';
+import { GrugIcon } from "@/components/icons/custom-icon";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
@@ -105,7 +105,7 @@ const ChatMessages = memo(({ chatHistory, isLoading }: { chatHistory: Message[],
                 <div key={index} className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
                 {message.role === 'model' && (
                     <Avatar className="h-8 w-8 border">
-                        <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
+                        <AvatarFallback className="bg-primary/20 text-primary"><GrugIcon className="h-5 w-5"/></AvatarFallback>
                     </Avatar>
                 )}
                 <div className={`max-w-[75%] rounded-lg p-3 shadow-sm ${
@@ -131,7 +131,7 @@ const ChatMessages = memo(({ chatHistory, isLoading }: { chatHistory: Message[],
                  <div key={chatHistory.length -1} className={`flex items-start gap-4 ${lastMessage.role === 'user' ? 'justify-end' : ''}`}>
                     {lastMessage.role === 'model' && (
                         <Avatar className="h-8 w-8 border">
-                            <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
+                            <AvatarFallback className="bg-primary/20 text-primary"><GrugIcon className="h-5 w-5"/></AvatarFallback>
                         </Avatar>
                     )}
                     <div className={`max-w-[75%] rounded-lg p-3 shadow-sm ${
@@ -160,7 +160,7 @@ const ChatMessages = memo(({ chatHistory, isLoading }: { chatHistory: Message[],
             {isLoading && (
                 <div className="flex items-start gap-4">
                 <Avatar className="h-8 w-8 border">
-                    <AvatarFallback className="bg-primary/20 text-primary"><Bot className="h-5 w-5"/></AvatarFallback>
+                    <AvatarFallback className="bg-primary/20 text-primary"><GrugIcon className="h-5 w-5"/></AvatarFallback>
                 </Avatar>
                 <div className="max-w-[75%] rounded-lg p-3 bg-card">
                     <div className="flex items-center gap-2 text-muted-foreground">
@@ -345,7 +345,7 @@ export default function Home() {
         <div className="p-4 border-b">
           <div className="flex flex-col items-start gap-1">
             <div className="flex items-center gap-2">
-                <CustomIcon className="h-6 w-6"/>
+                <GrugIcon className="h-6 w-6"/>
                 <h1 className="text-xl font-bold">Grug</h1>
             </div>
             <p className="text-xs text-muted-foreground ml-8">PDF Chat tool Created by Caveman Software</p>
