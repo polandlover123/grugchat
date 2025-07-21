@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useRef, useEffect, type SVGProps, memo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { pdfChat } from "@/ai/flows/pdf-chat";
