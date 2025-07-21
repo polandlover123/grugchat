@@ -7,7 +7,8 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bot, User, Upload, Trash2, Loader2, Paperclip, Plus, MessageSquare, BookText } from 'lucide-react';
+import { Bot, User, Upload, Trash2, Loader2, Paperclip, Plus, MessageSquare } from 'lucide-react';
+import { CustomIcon } from "@/components/icons/custom-icon";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
@@ -344,7 +345,7 @@ export default function Home() {
         <div className="p-4 border-b">
           <div className="flex flex-col items-start gap-1">
             <div className="flex items-center gap-2">
-                <BookText className="h-6 w-6"/>
+                <CustomIcon className="h-6 w-6"/>
                 <h1 className="text-xl font-bold">Grug</h1>
             </div>
             <p className="text-xs text-muted-foreground ml-8">PDF Chat tool Created by Caveman Software</p>
