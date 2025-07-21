@@ -14,7 +14,7 @@ export default function Header() {
       <div className="flex items-center gap-4">
         <Badge variant="outline">Beta 1.0.0</Badge>
         <nav>
-          <Link href="/contact" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+          <Link href="/contact" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             Contact Us
           </Link>
         </nav>
