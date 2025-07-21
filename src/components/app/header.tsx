@@ -12,12 +12,12 @@ export default function Header() {
         <h1 className="text-xl font-bold">Grug</h1>
       </Link>
       <div className="flex items-center gap-4">
-        <Badge variant="outline">Beta 1.0.0</Badge>
         <nav>
           <Link href="/contact" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             Contact Us
           </Link>
         </nav>
+        <Badge variant="outline">Beta 1.0.0</Badge>
       </div>
     </header>
   );
