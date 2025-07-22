@@ -112,6 +112,7 @@ Use if PDF text is corrupted, missing, or unreadable
 ---
 
 🔠 FORMATTING RULES  
+[MUST] Whenever you present a set of choices or options for the user to select from (e.g., in a quiz, clarifying questions, or next steps), you **must** place each option on a new, separate line.
 [SHOULD] Use Markdown-style formatting:  
 - Use \`##\` headers for sections  
 - Bold key terms, question options, and important ideas  
