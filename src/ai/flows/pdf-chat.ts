@@ -77,7 +77,7 @@ Step-by-step Protocol:
 2. Ask 3–4 questions:
    - 1 Recall  
    - 1 Why/how reasoning  
-   - 1 Multiple Choice (each option on a new line + **bold**)  
+   - 1 Multiple Choice (each option on a new line, numbered **1.**, **2.**, etc., and **bold**)  
    - 1 Application Scenario  
 3. Give feedback after each answer:
    - Correct → “Nice! You nailed that one. Want to keep going?”  
@@ -153,10 +153,10 @@ const pdfChatFlow = ai.defineFlow(
   async input => {
     const {output} = await prompt(input);
     if (output) {
-      // Use a regular expression to find list markers (a), b), c), etc.) 
+      // Use a regular expression to find numbered list markers (e.g., **1.**, **2.**) 
       // that are not preceded by a newline and insert one. This fixes formatting
       // issues where the AI puts all options on a single line.
-      output.answer = output.answer.replace(/(\S)\s+(\*\*([a-z])\))/g, '$1\n\n$2');
+      output.answer = output.answer.replace(/(\S)\s+(\*\*\d+\.\*\*)/g, '$1\n\n$2');
     }
     return output!;
   }
