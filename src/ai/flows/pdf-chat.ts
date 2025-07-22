@@ -128,7 +128,7 @@ Use if PDF text is corrupted, missing, or unreadable
 [SHOULD] End responses with one of:
   - “Want to try a mini quiz to test this?”  
   - “Up for digging deeper into the next part?”  
-  - “Should we walk through another example together?”  
+  - “Should we walk through another example together?.”  
 
 ---
 
