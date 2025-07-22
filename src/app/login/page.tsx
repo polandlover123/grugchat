@@ -25,7 +25,7 @@ export default function LoginPage() {
     }, [user, router]);
 
     return (
-        <div className="flex flex-col min-h-screen items-center justify-center bg-background text-foreground font-body p-4">
+        <div className="flex flex-col h-screen items-center justify-center bg-background text-foreground font-body p-4">
              <Card className="w-full max-w-sm">
                 <CardHeader className="text-center">
                     <div className="flex justify-center mb-4">
