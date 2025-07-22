@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, type SVGProps, memo } from "react";
+import { useState, useRef, useEffect, type SVGProps, memo, use } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { pdfChat } from "@/ai/flows/pdf-chat";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
+import { useRouter } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Message = {
   role: "user" | "model";
@@ -177,7 +180,39 @@ const ChatMessages = memo(({ chatHistory, isLoading }: { chatHistory: Message[],
 });
 ChatMessages.displayName = 'ChatMessages';
 
-export default function Home() {
+const Page = () => {
+    const { user, loading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login');
+        }
+    }, [user, loading, router]);
+
+    if (loading || !user) {
+        return (
+            <div className="flex h-full bg-background text-foreground font-body">
+                <Header />
+                <aside className="w-1/6 flex-col border-r bg-card hidden sm:flex p-4 space-y-2">
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                </aside>
+                <main className="flex-1 flex flex-col items-center justify-center">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                </main>
+            </div>
+        );
+    }
+    
+    return <Home />;
+}
+
+export default Page;
+
+
+function Home() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [userInput, setUserInput] = useState("");
