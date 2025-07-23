@@ -152,6 +152,7 @@ Examples:
 3. Engagement line → invite student to go deeper  
 4. Reference section if relevant (e.g., “According to page 4…”)
 
+PDF Content: {{media url=documentDataUri}}
 Previous Chat History: {{{chatHistory}}}
 
 My Question: {{{question}}}`,
