@@ -34,10 +34,14 @@ type Message = {
 
 type ChatSession = {
   id: string;
-  pdfFile: File;
+  pdfName: string; // Store name instead of File object
   pdfDataUri: string;
   chatHistory: Message[];
 }
+
+// A version of ChatSession that is safe to store in localStorage (without File object)
+type SerializableChatSession = Omit<ChatSession, 'pdfFile'> & { pdfName: string };
+
 
 const WelcomeIcon = (props: SVGProps<SVGSVGElement>) => (
     <svg
@@ -213,6 +217,7 @@ export default Page;
 
 
 function Home() {
+  const { user } = useAuth();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [userInput, setUserInput] = useState("");
@@ -220,6 +225,52 @@ function Home() {
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const getStorageKey = () => user ? `chatSessions_${user.uid}` : null;
+
+  useEffect(() => {
+    const storageKey = getStorageKey();
+    if (!storageKey) return;
+
+    try {
+      const savedSessions = localStorage.getItem(storageKey);
+      if (savedSessions) {
+        const parsedSessions: SerializableChatSession[] = JSON.parse(savedSessions);
+        setSessions(parsedSessions);
+        if (parsedSessions.length > 0 && !activeChatId) {
+            setActiveChatId(parsedSessions[0].id);
+        }
+      }
+    } catch (error) {
+        console.error("Failed to load sessions from localStorage", error);
+        toast({
+            title: "Could not load chats",
+            description: "Your previous chat history could not be restored from this browser.",
+            variant: "destructive",
+        })
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const storageKey = getStorageKey();
+    if (!storageKey || sessions.length === 0 && localStorage.getItem(storageKey) === null) return;
+    
+    try {
+        const sessionsToSave: SerializableChatSession[] = sessions.map(({ pdfName, ...rest }) => ({
+            ...rest,
+            pdfName: pdfName,
+        }));
+        localStorage.setItem(storageKey, JSON.stringify(sessionsToSave));
+    } catch (error) {
+        console.error("Failed to save sessions to localStorage", error);
+        toast({
+            title: "Could not save chats",
+            description: "There was an issue saving your chats to this browser.",
+            variant: "destructive",
+        })
+    }
+  }, [sessions, user]);
+
 
   const activeSession = sessions.find(s => s.id === activeChatId) || null;
   const chatHistory = activeSession?.chatHistory || [];
@@ -242,7 +293,7 @@ function Home() {
       reader.onload = (e) => {
         const newSession: ChatSession = {
           id: newSessionId,
-          pdfFile: file,
+          pdfName: file.name,
           pdfDataUri: e.target?.result as string,
           chatHistory: [],
         }
@@ -312,7 +363,7 @@ function Home() {
   
   const confirmDeleteChat = () => {
     if (!sessionToDelete) return;
-    const sessionName = sessions.find(s => s.id === sessionToDelete)?.pdfFile.name;
+    const sessionName = sessions.find(s => s.id === sessionToDelete)?.pdfName;
 
     setSessions(prev => {
         const remaining = prev.filter(s => s.id !== sessionToDelete);
@@ -350,7 +401,7 @@ function Home() {
       <div className="flex items-center justify-between gap-3 border-b p-4 shrink-0">
         <div className="flex items-center gap-3">
           <Paperclip className="text-primary h-5 w-5"/>
-          <h2 className="text-lg font-medium truncate">{activeSession?.pdfFile.name}</h2>
+          <h2 className="text-lg font-medium truncate">{activeSession?.pdfName}</h2>
         </div>
       </div>
       <ChatMessages chatHistory={chatHistory} isLoading={isLoading} />
@@ -404,7 +455,7 @@ function Home() {
                 >
                   <MessageSquare className="h-4 w-4 flex-shrink-0" />
                   <div className="overflow-hidden text-left">
-                    <span className="truncate block">{session.pdfFile.name}</span>
+                    <span className="truncate block">{session.pdfName}</span>
                   </div>
                 </Button>
                 <Button
@@ -435,7 +486,7 @@ function Home() {
             <AlertDialogTitle>Are you sure you want to delete this chat?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the chat history for
-              "{sessions.find(s => s.id === sessionToDelete)?.pdfFile.name}".
+              "{sessions.find(s => s.id === sessionToDelete)?.pdfName}".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
