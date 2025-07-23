@@ -6,7 +6,7 @@ const firebaseConfig = {
   "appId": "1:989033345818:web:45b3303a27647cf54fb2a3",
   "storageBucket": "geminipdf-chat-lq7rj.firebasestorage.app",
   "apiKey": "AIzaSyAbXbbE0lppdQUfk--acckxzIzZsBNk22U",
-  "authDomain": "geminipdf-chat-lq7rj.firebaseapp.com",
+  "authDomain": "cavemansoftware.org",
   "measurementId": "",
   "messagingSenderId": "989033345818"
 };
