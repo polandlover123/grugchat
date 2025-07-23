@@ -2,9 +2,9 @@
 'use server';
 
 /**
- * @fileOverview Document Chat flow that answers user questions based on the content of an uploaded document.
+ * @fileOverview PDF Chat flow that answers user questions based on the content of an uploaded PDF.
  *
- * - pdfChat - A function that handles the document chat process.
+ * - pdfChat - A function that handles the PDF chat process.
  * - PdfChatInput - The input type for the pdfChat function.
  * - PdfChatOutput - The return type for the pdfChat function.
  */
@@ -12,21 +12,21 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const DocumentChatInputSchema = z.object({
+const PdfChatInputSchema = z.object({
   documentDataUri: z
     .string()
     .describe(
-      `A document, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'.`
+      `A PDF document, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:application/pdf;base64,<encoded_data>'.`
     ),
-  question: z.string().describe('The user question about the document content.'),
+  question: z.string().describe('The user question about the PDF content.'),
   chatHistory: z.string().optional().describe('Previous chat history to maintain context.'),
 });
-export type PdfChatInput = z.infer<typeof DocumentChatInputSchema>;
+export type PdfChatInput = z.infer<typeof PdfChatInputSchema>;
 
-const DocumentChatOutputSchema = z.object({
-  answer: z.string().describe('The answer to the user question based on the document content.'),
+const PdfChatOutputSchema = z.object({
+  answer: z.string().describe('The answer to the user question based on the PDF content.'),
 });
-export type PdfChatOutput = z.infer<typeof DocumentChatOutputSchema>;
+export type PdfChatOutput = z.infer<typeof PdfChatOutputSchema>;
 
 export async function pdfChat(input: PdfChatInput): Promise<PdfChatOutput> {
   return pdfChatFlow(input);
@@ -34,8 +34,8 @@ export async function pdfChat(input: PdfChatInput): Promise<PdfChatOutput> {
 
 const prompt = ai.definePrompt({
   name: 'pdfChatPrompt',
-  input: {schema: DocumentChatInputSchema},
-  output: {schema: DocumentChatOutputSchema},
+  input: {schema: PdfChatInputSchema},
+  output: {schema: PdfChatOutputSchema},
   prompt: `ROLE OVERVIEW  
 Act as a Science 10 Chemistry Tutor AI supporting high school students studying from a provided document.  
 Your ONLY source of knowledge is the readable text in the document.  
@@ -165,8 +165,8 @@ My Question: {{{question}}}`,
 const pdfChatFlow = ai.defineFlow(
   {
     name: 'pdfChatFlow',
-    inputSchema: DocumentChatInputSchema,
-    outputSchema: DocumentChatOutputSchema,
+    inputSchema: PdfChatInputSchema,
+    outputSchema: PdfChatOutputSchema,
   },
   async input => {
     const {output} = await prompt(input);

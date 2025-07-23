@@ -41,7 +41,7 @@ type ChatSession = {
 }
 
 // A version of ChatSession that is safe to store in localStorage
-type SerializableChatSession = Omit<ChatSession, 'pdfFile'> & { fileName: string };
+type SerializableChatSession = Omit<ChatSession, 'pdfFile'>;
 
 
 const WelcomeIcon = (props: SVGProps<SVGSVGElement>) => (
@@ -227,6 +227,7 @@ function Home() {
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isInitialLoad = useRef(true);
 
   const getStorageKey = () => user ? `chatSessions_${user.uid}` : null;
 
@@ -254,13 +255,19 @@ function Home() {
   }, [user]);
 
   useEffect(() => {
+    if (isInitialLoad.current) {
+        isInitialLoad.current = false;
+        return;
+    }
+
     const storageKey = getStorageKey();
-    if (!storageKey || sessions.length === 0 && localStorage.getItem(storageKey) === null) return;
+    if (!storageKey) return;
     
     try {
-        const sessionsToSave: SerializableChatSession[] = sessions.map(({ fileName, ...rest }) => ({
+        const sessionsToSave: SerializableChatSession[] = sessions.map(({ fileName, fileDataUri, ...rest }) => ({
             ...rest,
-            fileName: fileName,
+            fileName,
+            fileDataUri,
         }));
         localStorage.setItem(storageKey, JSON.stringify(sessionsToSave));
     } catch (error) {
@@ -280,10 +287,10 @@ function Home() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.type !== "application/pdf" && file.type !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+      if (file.type !== "application/pdf") {
         toast({
           title: "Invalid File Type",
-          description: "Please upload a valid PDF or DOCX file.",
+          description: "Please upload a valid PDF file.",
           variant: "destructive",
         });
         return;
@@ -303,7 +310,7 @@ function Home() {
         setSessions(prev => [...prev, newSession]);
         setActiveChatId(newSessionId);
         toast({
-          title: "Document Uploaded",
+          title: "PDF Uploaded",
           description: `"${file.name}" is ready for chatting.`,
         });
       };
@@ -320,9 +327,11 @@ function Home() {
 
     const newUserMessage: Message = { role: "user", content: userInput };
     const currentInput = userInput;
+    const originalHistory = activeSession.chatHistory;
+    
     setIsAnimating(false);
 
-    const updatedHistoryWithUser = [...activeSession.chatHistory, newUserMessage];
+    const updatedHistoryWithUser = [...originalHistory, newUserMessage];
     setSessions(prev => prev.map(s => 
       s.id === activeChatId ? { ...s, chatHistory: updatedHistoryWithUser } : s
     ));
@@ -348,7 +357,7 @@ function Home() {
     } catch (error) {
       console.error(error);
        setSessions(prev => prev.map(s => 
-        s.id === activeChatId ? { ...s, chatHistory: updatedHistoryWithUser.slice(0, -1) } : s
+        s.id === activeChatId ? { ...s, chatHistory: originalHistory } : s
       ));
       setUserInput(currentInput);
       toast({
@@ -395,9 +404,9 @@ function Home() {
      <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-8">
         <WelcomeIcon className="text-muted-foreground/50" />
         <h2 className="text-2xl font-semibold">Grug (Rhymes with Grug)</h2>
-        <p className="text-muted-foreground">Upload a PDF or DOCX document to start a conversation.</p>
+        <p className="text-muted-foreground">Upload a PDF document to start a conversation.</p>
         <Button onClick={() => fileInputRef.current?.click()}>
-            <Upload className="mr-2 h-4 w-4" /> Select Document
+            <Upload className="mr-2 h-4 w-4" /> Select PDF
         </Button>
     </div>
   );
@@ -419,7 +428,7 @@ function Home() {
             <Input
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
-              placeholder="Ask a question about the document..."
+              placeholder="Ask a question about the PDF..."
               disabled={!activeSession || isLoading}
               className="flex-1"
             />
@@ -444,14 +453,14 @@ function Home() {
             <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
             <span className="truncate">New Chat</span>
           </Button>
-          <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden" />
+          <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="application/pdf" className="hidden" />
         </div>
 
         <ScrollArea className="flex-1">
           <div className="p-4 pt-0 space-y-2">
             {sessions.length === 0 && (
               <div className="px-4 text-sm text-muted-foreground text-center">
-                Upload a document to start a new chat.
+                Upload a PDF to start a new chat.
               </div>
             )}
             {sessions.map(session => (
