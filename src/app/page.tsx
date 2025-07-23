@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useRef, useEffect, type SVGProps, memo, use } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -91,7 +92,7 @@ const AnimatedMessage = ({ message, onAnimationComplete }: { message: Message, o
   );
 };
 
-const ChatMessages = memo(({ chatHistory, isLoading }: { chatHistory: Message[], isLoading: boolean}) => {
+const ChatMessages = memo(({ chatHistory, isLoading, isLastMessageAnimating }: { chatHistory: Message[], isLoading: boolean, isLastMessageAnimating: boolean}) => {
     const chatContainerRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -147,7 +148,7 @@ const ChatMessages = memo(({ chatHistory, isLoading }: { chatHistory: Message[],
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-card'
                         }`}>
-                            {lastMessage.role === 'model' && !isLoading ? (
+                            {lastMessage.role === 'model' && isLastMessageAnimating ? (
                                 <AnimatedMessage message={lastMessage} onAnimationComplete={scrollToBottom} />
                             ) : (
                                 <div className="markdown-container text-sm">
@@ -222,6 +223,7 @@ function Home() {
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -288,6 +290,7 @@ function Home() {
       }
       
       const newSessionId = Date.now().toString();
+      setIsAnimating(false);
 
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -317,6 +320,7 @@ function Home() {
 
     const newUserMessage: Message = { role: "user", content: userInput };
     const currentInput = userInput;
+    setIsAnimating(false);
 
     const updatedHistoryWithUser = [...activeSession.chatHistory, newUserMessage];
     setSessions(prev => prev.map(s => 
@@ -340,6 +344,7 @@ function Home() {
       setSessions(prev => prev.map(s => 
         s.id === activeChatId ? { ...s, chatHistory: [...updatedHistoryWithUser, modelMessage] } : s
       ));
+      setIsAnimating(true);
     } catch (error) {
       console.error(error);
        setSessions(prev => prev.map(s => 
@@ -364,6 +369,7 @@ function Home() {
   const confirmDeleteChat = () => {
     if (!sessionToDelete) return;
     const sessionName = sessions.find(s => s.id === sessionToDelete)?.pdfName;
+    setIsAnimating(false);
 
     setSessions(prev => {
         const remaining = prev.filter(s => s.id !== sessionToDelete);
@@ -381,6 +387,7 @@ function Home() {
   };
 
   const selectChat = (sessionId: string) => {
+    setIsAnimating(false);
     setActiveChatId(sessionId);
   }
 
@@ -396,6 +403,8 @@ function Home() {
   );
 
   const renderChatInterface = () => {
+    const isLastMessageAnimating = isAnimating && !isLoading && (chatHistory.at(-1)?.role === 'model');
+
     return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between gap-3 border-b p-4 shrink-0">
@@ -404,7 +413,7 @@ function Home() {
           <h2 className="text-lg font-medium truncate">{activeSession?.pdfName}</h2>
         </div>
       </div>
-      <ChatMessages chatHistory={chatHistory} isLoading={isLoading} />
+      <ChatMessages chatHistory={chatHistory} isLoading={isLoading} isLastMessageAnimating={isLastMessageAnimating} />
        <div className="border-t p-4 shrink-0">
           <form onSubmit={handleChatSubmit} className="flex items-center gap-2">
             <Input
