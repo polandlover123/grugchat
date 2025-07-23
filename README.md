@@ -1,5 +1,4 @@
-# Firebase Studio
+# Grug CHAT PDF & DOCX CHAT TOOL
+use it to study, or to discuss specific information. 
 
-This is a NextJS starter in Firebase Studio.
-
-To get started, take a look at src/app/page.tsx.
+thanks!
