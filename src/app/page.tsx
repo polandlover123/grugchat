@@ -35,13 +35,13 @@ type Message = {
 
 type ChatSession = {
   id: string;
-  pdfName: string; // Store name instead of File object
-  pdfDataUri: string;
+  fileName: string; 
+  fileDataUri: string;
   chatHistory: Message[];
 }
 
-// A version of ChatSession that is safe to store in localStorage (without File object)
-type SerializableChatSession = Omit<ChatSession, 'pdfFile'> & { pdfName: string };
+// A version of ChatSession that is safe to store in localStorage
+type SerializableChatSession = Omit<ChatSession, 'pdfFile'> & { fileName: string };
 
 
 const WelcomeIcon = (props: SVGProps<SVGSVGElement>) => (
@@ -258,9 +258,9 @@ function Home() {
     if (!storageKey || sessions.length === 0 && localStorage.getItem(storageKey) === null) return;
     
     try {
-        const sessionsToSave: SerializableChatSession[] = sessions.map(({ pdfName, ...rest }) => ({
+        const sessionsToSave: SerializableChatSession[] = sessions.map(({ fileName, ...rest }) => ({
             ...rest,
-            pdfName: pdfName,
+            fileName: fileName,
         }));
         localStorage.setItem(storageKey, JSON.stringify(sessionsToSave));
     } catch (error) {
@@ -280,10 +280,10 @@ function Home() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.type !== "application/pdf") {
+      if (file.type !== "application/pdf" && file.type !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
         toast({
           title: "Invalid File Type",
-          description: "Please upload a valid PDF file.",
+          description: "Please upload a valid PDF or DOCX file.",
           variant: "destructive",
         });
         return;
@@ -296,14 +296,14 @@ function Home() {
       reader.onload = (e) => {
         const newSession: ChatSession = {
           id: newSessionId,
-          pdfName: file.name,
-          pdfDataUri: e.target?.result as string,
+          fileName: file.name,
+          fileDataUri: e.target?.result as string,
           chatHistory: [],
         }
         setSessions(prev => [...prev, newSession]);
         setActiveChatId(newSessionId);
         toast({
-          title: "PDF Uploaded",
+          title: "Document Uploaded",
           description: `"${file.name}" is ready for chatting.`,
         });
       };
@@ -335,7 +335,7 @@ function Home() {
         .join("\n");
 
       const response = await pdfChat({
-        pdfDataUri: activeSession.pdfDataUri,
+        documentDataUri: activeSession.fileDataUri,
         question: currentInput,
         chatHistory: historyString,
       });
@@ -368,7 +368,7 @@ function Home() {
   
   const confirmDeleteChat = () => {
     if (!sessionToDelete) return;
-    const sessionName = sessions.find(s => s.id === sessionToDelete)?.pdfName;
+    const sessionName = sessions.find(s => s.id === sessionToDelete)?.fileName;
     setIsAnimating(false);
 
     setSessions(prev => {
@@ -395,9 +395,9 @@ function Home() {
      <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-8">
         <WelcomeIcon className="text-muted-foreground/50" />
         <h2 className="text-2xl font-semibold">Grug (Rhymes with Grug)</h2>
-        <p className="text-muted-foreground">Upload a PDF document to start a conversation.</p>
+        <p className="text-muted-foreground">Upload a PDF or DOCX document to start a conversation.</p>
         <Button onClick={() => fileInputRef.current?.click()}>
-            <Upload className="mr-2 h-4 w-4" /> Select PDF
+            <Upload className="mr-2 h-4 w-4" /> Select Document
         </Button>
     </div>
   );
@@ -410,7 +410,7 @@ function Home() {
       <div className="flex items-center justify-between gap-3 border-b p-4 shrink-0">
         <div className="flex items-center gap-3">
           <Paperclip className="text-primary h-5 w-5"/>
-          <h2 className="text-lg font-medium truncate">{activeSession?.pdfName}</h2>
+          <h2 className="text-lg font-medium truncate">{activeSession?.fileName}</h2>
         </div>
       </div>
       <ChatMessages chatHistory={chatHistory} isLoading={isLoading} isLastMessageAnimating={isLastMessageAnimating} />
@@ -419,7 +419,7 @@ function Home() {
             <Input
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
-              placeholder="Ask a question about the PDF..."
+              placeholder="Ask a question about the document..."
               disabled={!activeSession || isLoading}
               className="flex-1"
             />
@@ -444,14 +444,14 @@ function Home() {
             <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
             <span className="truncate">New Chat</span>
           </Button>
-          <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="application/pdf" className="hidden" />
+          <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden" />
         </div>
 
         <ScrollArea className="flex-1">
           <div className="p-4 pt-0 space-y-2">
             {sessions.length === 0 && (
               <div className="px-4 text-sm text-muted-foreground text-center">
-                Upload a PDF to start a new chat.
+                Upload a document to start a new chat.
               </div>
             )}
             {sessions.map(session => (
@@ -464,7 +464,7 @@ function Home() {
                 >
                   <MessageSquare className="h-4 w-4 flex-shrink-0" />
                   <div className="overflow-hidden text-left">
-                    <span className="truncate block">{session.pdfName}</span>
+                    <span className="truncate block">{session.fileName}</span>
                   </div>
                 </Button>
                 <Button
@@ -495,7 +495,7 @@ function Home() {
             <AlertDialogTitle>Are you sure you want to delete this chat?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the chat history for
-              "{sessions.find(s => s.id === sessionToDelete)?.pdfName}".
+              "{sessions.find(s => s.id === sessionToDelete)?.fileName}".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
